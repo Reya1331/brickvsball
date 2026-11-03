@@ -58,13 +58,15 @@ canvas{width:100%;display:block;background:#000;border:3px solid #444}
 .hint{color:var(--mute);font-size:16px;margin:8px 0 0;line-height:1.1}
 #win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:rgba(0,0,0,.85);font:26px 'Press Start 2P',monospace}
 #win button{font-size:20px;padding:6px 18px}
-#ctrl-box{position:fixed;bottom:12px;left:12px;background:var(--panel);border:3px solid #4a4a5e;padding:8px 10px;z-index:99;box-shadow:0 0 10px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:6px;min-width:220px}
+#ctrl-box{position:fixed;bottom:12px;left:12px;background:var(--panel);border:3px solid #4a4a5e;padding:8px 10px;z-index:99;box-shadow:0 0 10px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:6px;min-width:240px}
 #ctrl-box h3{margin:0 0 4px;font:11px 'Press Start 2P',monospace;color:var(--gold)}
 #ctrl-box .btn-group{display:flex;gap:4px;flex-wrap:wrap}
 #ctrl-box button{font-size:14px;padding:2px 6px;flex:1}
 #ctrl-box input{background:#15151f;border:2px solid #4a4a5e;color:var(--ink);font:inherit;width:60px;padding:2px 4px;text-align:center}
-.pwr-row{display:flex;gap:4px;margin-top:4px}
-.pwr-row button{background:#3a2a66;border-color:#b48ff0;font-size:13px}
+.pwr-section{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.pwr-row{display:flex;gap:4px}
+.pwr-row button{background:#1a2c3a;border-color:#4a82a8;font-size:12px;flex:1}
+#trivia-box{margin-top:6px;font-size:15px;color:var(--gold);background:#12121a;border:1px dashed #4a4a5e;padding:4px 6px;min-height:36px}
 </style></head><body>
 <div id="app">
  <div class="pn" id="p0"></div>
@@ -98,11 +100,17 @@ canvas{width:100%;display:block;background:#000;border:3px solid #444}
   <button id="auto-brick">Auto-Brick: OFF</button>
   <button id="rst-game">Reset</button>
  </div>
- <div class="pwr-row" id="pwr-container" style="display:none">
-  <button id="pwr-multi">Multiball</button>
-  <button id="pwr-surge">Surge</button>
-  <button id="pwr-laser">Laser</button>
+ <div class="pwr-section" id="pwr-container" style="display:none">
+  <div class="pwr-row">
+   <button id="pwr-free">Free Ball (<span id="c-free">50</span>)</button>
+   <button id="pwr-fire">Fireball (<span id="c-fire">200</span>)</button>
+  </div>
+  <div class="pwr-row">
+   <button id="pwr-speed">Speed Boost (<span id="c-speed">500</span>)</button>
+   <button id="pwr-multi">Multi-Ball (<span id="c-multi">1500</span>)</button>
+  </div>
  </div>
+ <div id="trivia-box">Idle Fact: Higher wave tiers yield exponentially more cash!</div>
 </div>
 
 <script>
@@ -124,6 +132,14 @@ const CFG={
 };
 
 const BRICK_PALETTE=['#ff4d4d','#ff944d','#ffd24d','#4dff4d','#4dffff','#4d79ff','#b34dff','#ff4db3'];
+const TRIVIA_FACTS=[
+ "Idle Fact: Free ball power-ups scale with your highest ball cost!",
+ "Trivia: The Heart shape map layout requires precision angled bounces to clear.",
+ "Idle Tip: Purchasing Fireball power-ups instantly vaporizes surrounding tile health.",
+ "Did you know? Star shaped maps feature central high-health core matrices.",
+ "Idle Strategy: Balance upgrading ball damage with multi-ball acquisition for maximum idle income!"
+];
+
 const f=x=>+x.toFixed(2),pc=x=>Math.round(x*100)+'%';
 
 const BALLS=[
@@ -194,6 +210,9 @@ const COL=['#2f9bff','#ff4d3d'];
 const SC=BALLS.findIndex(b=>b.id=='scatter');
 let is1P=false,wave1P=1,autoBrick=false,startCoinsVal=40;
 
+// Idle Breakout Powerup Costs
+let pwrCosts={free:50,fire:200,speed:500,multi:1500};
+
 function calcStat(b,l){
  const s={...b.base};
  b.ups.forEach((u,j)=>{for(const k in u[3]){
@@ -212,23 +231,36 @@ function refresh(p,i){S[p][i]=calcStat(BALLS[i],lv[p][i])}
 function initField1P(){
  hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
  alive[1]=0;
- const shapeType=(wave1P-1)%4;
+ const shapeType=(wave1P-1)%8;
  for(let r=0;r<ROWS;r++){
   for(let c=0;c<COLS;c++){
    let active=false;
-   if(shapeType===0){ // Pyramid
-    const mid=COLS/2;
-    if(r>=2&&r<=ROWS-3&&c>=mid-(ROWS-r)/2&&c<=mid+(ROWS-r)/2)active=true;
-   }else if(shapeType===1){ // Castle Towers
-    if(r>=4&&r<=ROWS-3&&(c>=3&&c<=7||c>=COLS-8&&c<=COLS-4||c>=9&&c<=COLS-10&&r>=8))active=true;
-   }else if(shapeType===2){ // Checkerboard fortress
-    if(r>=2&&r<=ROWS-3&&c>=2&&c<=COLS-3&&(r+c)%2===0)active=true;
-   }else{ // Diamond fortress
+   if(shapeType===0){ // Heart shape
+    const x=(c-COLS/2)/(COLS/4),y=-(r-ROWS/2)/(ROWS/4);
+    const eqn=Math.pow(x*x+y*y-1,3)-x*x*y*y*y;
+    if(eqn<=0&&r>=2&&r<=ROWS-3)active=true;
+   }else if(shapeType===1){ // Star shape
     const dr=ROWS/2,dc=COLS/2;
-    if(Math.abs(r-dr)+Math.abs(c-dc)<=8)active=true;
+    const angle=Math.atan2(r-dr,c-dc),dist=Math.hypot(r-dr,c-dc);
+    if(dist<=8+Math.sin(angle*5)*3)active=true;
+   }else if(shapeType===2){ // Spiral labyrinth
+    const dr=ROWS/2,dc=COLS/2;
+    const angle=Math.atan2(r-dr,c-dc),dist=Math.hypot(r-dr,c-dc);
+    if(Math.abs((dist)-(angle+wave1P)*2)%4<1.5&&dist<=9)active=true;
+   }else if(shapeType===3){ // Diamond fortress
+    const dr=ROWS/2,dc=COLS/2;
+    if(Math.abs(r-dr)+Math.abs(c-dc)<=9)active=true;
+   }else if(shapeType===4){ // Wall Borders & Perimeter Defense
+    if(r===1||r===ROWS-2||c===1||c===COLS-2||(r+c)%3===0)active=true;
+   }else if(shapeType===5){ // Hourglass Wall Anchors
+    if(r>=2&&r<=ROWS-3&&(c<=r||c>=COLS-1-r||c===Math.floor(COLS/2)))active=true;
+   }else if(shapeType===6){ // Crosshairs & Wall Shields
+    if(r===Math.floor(ROWS/2)||c===Math.floor(COLS/2)||c===2||c===COLS-3)active=true;
+   }else{ // Massive Citadel Grid
+    if(r>=2&&r<=ROWS-3&&c>=2&&c<=COLS-3&&(r%2===0||c%3===0))active=true;
    }
    if(active){
-    hp[r][c]=Math.min(15,wave1P+Math.floor(Math.random()*2));
+    hp[r][c]=Math.min(30,wave1P*1.5+Math.floor(Math.random()*3));
     alive[1]++;
    }
   }
@@ -240,13 +272,14 @@ function init(){
  hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
  fl=new Float32Array(ROWS*COLS);alive=[0,0];bl=[CFG.placeBricks,CFG.placeBricks];arm=[false,false];
  balls=[];mon=[startCoinsVal,startCoinsVal];earn=[0,0];rate=[0,0];mc=[0,0];over=-1;gt=0;hm=1;
+ pwrCosts={free:50,fire:200,speed:500,multi:1500};
  lv=[0,1].map(()=>BALLS.map(b=>b.ups.map(()=>0)));cnt=[0,1].map(()=>BALLS.map(()=>0));
  S=[0,1].map(()=>[]);for(let p=0;p<2;p++)BALLS.forEach((b,i)=>refresh(p,i));
 
  if(is1P){
   wave1P=1;
   initField1P();
-  spawn(0,0);
+  spawn(0,0); // Spawns cleanly on player 0 side (left/center)
   document.getElementById('p0').style.display='none';
   document.getElementById('p1').style.display='block';
   document.getElementById('pwr-container').style.display='flex';
@@ -259,12 +292,15 @@ function init(){
   document.getElementById('pwr-container').style.display='none';
  }
  document.getElementById('win').style.display='none';
+ updatePwrUI();
 }
 
 function spawn(p,t=0){
- const y=40+Math.random()*(H-80);let a=(Math.random()-.5)*1.6;if(p&&!is1P)a+=Math.PI;
- balls.push({p,t,id:BALLS[t].id,x:p?W-SIDE*CW-10:SIDE*CW+10,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,tg:null,tt:0,synHits:[],curved:0,mergedId:null,customS:null});
- cnt[p][t]++;
+ const y=40+Math.random()*(H-80);
+ let a=(Math.random()-.5)*1.6;
+ const startX=is1P?(W/2):(p?W-SIDE*CW-10:SIDE*CW+10);
+ balls.push({p:is1P?0:p,t,id:BALLS[t].id,x:startX,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,tg:null,tt:0,synHits:[],curved:0,mergedId:null,customS:null,fire:0});
+ cnt[is1P?0:p][t]++;
 }
 
 const buyCost=(p,i)=>Math.round(BALLS[i].cost*CFG.buyGrow**(cnt[p][i]-(i==0?1:0)));
@@ -284,15 +320,15 @@ function place(p,r,c){
 
 function dmg(r,c,a,p,ballRef=null){
  if(r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0||a<=0)return;
- const o=own(c),x=Math.min(hp[r][c],a);hp[r][c]-=x;fl[r*COLS+c]=1;
+ const o=own(c),x=Math.min(hp[r][c],a);
+ if(ballRef&&ballRef.fire)x*=2.5; // Fireball bonus damage
+ hp[r][c]-=x;fl[r*COLS+c]=1;
  if(is1P||o!==p)getc(p,x*CFG.coinsPerHP*(is1P?wave1P:1));
  if(hp[r][c]<=.001){
   hp[r][c]=0;alive[o]--;
   if(ballRef&&ballRef.id==='cannon'){
    const s=ballRef.customS||S[ballRef.p][ballRef.t];
-   if(!s.pierceBreak){
-    ballRef.ux=-ballRef.ux;ballRef.uy=-ballRef.uy;
-   }
+   if(!s.pierceBreak){ballRef.ux=-ballRef.ux;ballRef.uy=-ballRef.uy}
   }
   if(is1P){
    if(alive[1]<=0){wave1P++;initField1P()}
@@ -300,7 +336,7 @@ function dmg(r,c,a,p,ballRef=null){
  }
 }
 
-function heal(r,c,a){if(r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0)return;hp[r][c]=Math.max(hp[r][c],Math.min(MAXHP,hp[r][c]+a*hm))}
+function heal(r,c,a){if(is1P||r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0)return;hp[r][c]=Math.max(hp[r][c],Math.min(MAXHP,hp[r][c]+a*hm))}
 function nb(r,c,fn){const o=own(c);[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([a,e])=>{if(e>=0&&e<COLS&&own(e)===o)fn(a,e)})}
 
 function minis(b,k){
@@ -313,18 +349,18 @@ function minis(b,k){
 
 function onHit(b,r,c,dx,dy){
  const p=b.p,o=own(c)===p&&!is1P,s=b.customS||S[p][b.t];
- if(b.mini){if(b.k=='d'||is1P)dmg(r,c,s.md,p,b);else if(b.k=='h'&&o)heal(r,c,s.mh);b.life--;return}
+ if(b.mini){if(b.k=='d'||is1P)dmg(r,c,s.md,p,b);else if(b.k=='h'&&!is1P&&o)heal(r,c,s.mh);b.life--;return}
  const d=s.dmg||0;
  const curId=b.mergedId||b.id;
 
  switch(curId){
- case 'basic':o?heal(r,c,s.heal):dmg(r,c,d,p,b);break;
- case 'plasma':if(o){heal(r,c,s.heal);nb(r,c,(a,e)=>heal(a,e,s.heal*s.hs))}else{dmg(r,c,d,p,b);nb(r,c,(a,e)=>dmg(a,e,d*s.sp,p))}break;
- case 'sniper':if(o)break;if(b.ch>=s.ct){b.ch=0;for(let n=0;n<=s.pn;n++)if(is1P||own(c+dx*n)===own(c))dmg(r+dy*n,c+dx*n,s.dmg+n*s.pb,p,b)}else dmg(r,c,d,p,b);break;
- case 'scatter':if(!o)dmg(r,c,d,p,b);minis(b,o?'h':'d');break;
- case 'cannon':if(o)dmg(r,c,s.fr,p,b);else{dmg(r,c,d,p,b);if(s.sh)nb(r,c,(a,e)=>dmg(a,e,d*s.sh,p))}break;
- case 'medic':if(o){heal(r,c,s.heal);if(s.au)nb(r,c,(a,e)=>heal(a,e,s.heal*s.au))}break;
- case 'homing':case 'synerget':if(!o)dmg(r,c,d,p,b);break;
+ case 'basic':o&&!is1P?heal(r,c,s.heal):dmg(r,c,d,p,b);break;
+ case 'plasma':if(o&&!is1P){heal(r,c,s.heal);nb(r,c,(a,e)=>heal(a,e,s.heal*s.hs))}else{dmg(r,c,d,p,b);nb(r,c,(a,e)=>dmg(a,e,d*s.sp,p))}break;
+ case 'sniper':if(o&&!is1P)break;if(b.ch>=s.ct){b.ch=0;for(let n=0;n<=s.pn;n++)if(is1P||own(c+dx*n)===own(c))dmg(r+dy*n,c+dx*n,s.dmg+n*s.pb,p,b)}else dmg(r,c,d,p,b);break;
+ case 'scatter':if(!o||is1P)dmg(r,c,d,p,b);minis(b,o&&!is1P?'h':'d');break;
+ case 'cannon':if(o&&!is1P)dmg(r,c,s.fr,p,b);else{dmg(r,c,d,p,b);if(s.sh)nb(r,c,(a,e)=>dmg(a,e,d*s.sh,p))}break;
+ case 'medic':if(o&&!is1P){heal(r,c,s.heal);if(s.au)nb(r,c,(a,e)=>heal(a,e,s.heal*s.au))}break;
+ case 'homing':case 'synerget':dmg(r,c,d,p,b);break;
  default:dmg(r,c,d,p,b);
  }
 }
@@ -338,7 +374,6 @@ function fix(b){
 function retarget(b){
  let best=1e12,tg=null;
  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(hp[r][c]>0){
-  if(!is1P&&(own(c)===b.p))continue;
   const d=(c*CW+CW/2-b.x)**2+(r*CH+CH/2-b.y)**2;if(d<best){best=d;tg=[c*CW+CW/2,r*CH+CH/2]}}
  b.tg=tg;
 }
@@ -411,7 +446,7 @@ function step(dt){
   const b=balls[i],s=b.customS||S[b.p][b.t];
   if(b.id=='sniper')b.ch+=dt;
   if(b.curved>0)b.curved-=dt;
-  if(b.id=='homing'||b.curved>0){
+  if(b.id=='homing'||b.curved>0||b.fire>0){
    b.tt-=dt;if(b.tt<=0){b.tt=.2;retarget(b)}
    if(b.tg){
     let d=Math.atan2(b.tg[1]-b.y,b.tg[0]-b.x)-Math.atan2(b.uy,b.ux);
@@ -454,7 +489,7 @@ const R=[[],[]],H2=[];
 P.forEach((el,p)=>{
  el.innerHTML=`<div class="ph"><h2 style="color:${COL[p]}">Player ${p+1}</h2><b></b><span>coins</span></div><p class="sub"></p><div class="pl"><button class="pb" data-a="p"><span></span><kbd>${p?'N0':'B'}</kbd></button><span class="pd">Click on target half to reinforce</span></div>`+
  BALLS.map((t,i)=>`<div class="card"><div class="hd"><button class="tg" data-a="t" data-i="${i}"><canvas class="ic" width="26" height="26"></canvas>${t.name}<span class="cn"></span></button><button class="buy" data-a="b" data-i="${i}"></button></div>
- <div class="bd"><p class="ds">${t.desc}</p><p class="st"></p>${t.ups.map((u,j)=>`<div class="u"><div class="ut">${u[0]}<span class="seg">${'<i></i>'.repeat(MAXLV)}</span></div><div class="ud">${u[1]}</div><div class="uv"><span class="cu"></span><em>→</em><span class="nx"></span></div><button class="ub" data-a="u" data-i="${i}" data-j="${j}"><b></b><small>Upgrade</small></button></div>`).join('')}</div></div>`).join('');
+ <div class="bd"><p class="ds">${t.desc}</p><p class="st"></p>${t.ups.map((u,j)=>is1P&&(u[0].includes('Healing')||u[0].includes('Serum')||u[0].includes('Core')&&j===2)?'':`<div class="u"><div class="ut">${u[0]}<span class="seg">${'<i></i>'.repeat(MAXLV)}</span></div><div class="ud">${u[1]}</div><div class="uv"><span class="cu"></span><em>→</em><span class="nx"></span></div><button class="ub" data-a="u" data-i="${i}" data-j="${j}"><b></b><small>Upgrade</small></button></div>`).join('')}</div></div>`).join('');
  H2[p]={coin:el.querySelector('.ph b'),sub:el.querySelector('.sub'),pb:el.querySelector('.pb'),pt:el.querySelector('.pb span')};
  el.querySelectorAll('.card').forEach((card,i)=>{
   drawBall(card.querySelector('.ic').getContext('2d'),BALLS[i].id,BALLS[i].color,COL[p],13,13,9,0);
@@ -473,6 +508,13 @@ P.forEach((el,p)=>{
 
 function set(el,t){if(el._t!==t){el.textContent=t;el._t=t}}
 
+function updatePwrUI(){
+ document.getElementById('c-free').textContent=pwrCosts.free;
+ document.getElementById('c-fire').textContent=pwrCosts.fire;
+ document.getElementById('c-speed').textContent=pwrCosts.speed;
+ document.getElementById('c-multi').textContent=pwrCosts.multi;
+}
+
 function ui(){
  for(let p=0;p<2;p++){
   set(H2[p].coin,Math.floor(mon[p]));
@@ -485,6 +527,7 @@ function ui(){
    if(!open[p][i])continue;
    set(r.st,'Now: '+BALLS[i].info(S[p][i]));
    BALLS[i].ups.forEach((u,j)=>{
+    if(is1P&&(u[0].includes('Healing')||u[0].includes('Serum')))return;
     const l=lv[p][i][j],ref=r.ups[j],mx=l>=MAXLV,c2=upCost(p,i,j);
     const at=k=>{const a=lv[p][i].slice();a[j]=k;return u[2](calcStat(BALLS[i],a))};
     ref.seg.forEach((g,k)=>g.classList.toggle('on',k<l));set(ref.cu,at(l));set(ref.nx,mx?'max':at(l+1));ref.nx.classList.toggle('mx',mx);
@@ -494,10 +537,16 @@ function ui(){
  }
  const m=Math.floor(gt/60),s=Math.floor(gt%60);
  set(document.getElementById('hud'),is1P?`Wave ${wave1P} · ${m}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')} · healing ${Math.round(hm*100)}%`);
+
+ document.getElementById('pwr-free').classList.toggle('off',mon[0]<pwrCosts.free);
+ document.getElementById('pwr-fire').classList.toggle('off',mon[0]<pwrCosts.fire);
+ document.getElementById('pwr-speed').classList.toggle('off',mon[0]<pwrCosts.speed);
+ document.getElementById('pwr-multi').classList.toggle('off',mon[0]<pwrCosts.multi);
 }
 
 let pe=[0,0];
 setInterval(()=>{for(let p=0;p<2;p++){const r=(earn[p]-pe[p])/.1;pe[p]=earn[p];rate[p]=rate[p]*.95+r*.05}ui()},100);
+setInterval(()=>{const fact=TRIVIA_FACTS[Math.floor(Math.random()*TRIVIA_FACTS.length)];document.getElementById('trivia-box').textContent=fact},8000);
 
 function showWin(){const w=document.getElementById('win'),t=document.getElementById('wt');t.textContent=`Player ${over+1} wins`;t.style.color=COL[over];w.style.display='flex'}
 document.getElementById('re').onclick=()=>{init();pe=[0,0]};
@@ -510,9 +559,11 @@ document.getElementById('m2p').onclick=()=>{is1P=false;document.getElementById('
 document.getElementById('auto-brick').onclick=()=>{autoBrick=!autoBrick;document.getElementById('auto-brick').textContent='Auto-Brick: '+(autoBrick?'ON':'OFF');document.getElementById('auto-brick').classList.toggle('on',autoBrick)};
 document.getElementById('rst-game').onclick=()=>init();
 
-document.getElementById('pwr-multi').onclick=()=>{if(is1P&&balls.length<CFG.ballCap){spawn(0,Math.floor(Math.random()*BALLS.length))}};
-document.getElementById('pwr-surge').onclick=()=>{if(is1P){mon[1]+=100*wave1P;earn[1]+=100*wave1P}};
-document.getElementById('pwr-laser').onclick=()=>{if(is1P){for(let c=0;c<COLS;c++)dmg(ROWS-3,c,50,1)}};
+// Idle Breakout Power-ups functionality
+document.getElementById('pwr-free').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.free&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.free;spawn(0,0);pwrCosts.free=Math.round(pwrCosts.free*1.5);updatePwrUI()}};
+document.getElementById('pwr-fire').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.fire&&balls.length>0){mon[0]-=pwrCosts.fire;balls.forEach(b=>b.fire=10);pwrCosts.fire=Math.round(pwrCosts.fire*1.8);updatePwrUI()}};
+document.getElementById('pwr-speed').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.speed&&balls.length>0){mon[0]-=pwrCosts.speed;balls.forEach(b=>{b.ux*=1.3;b.uy*=1.3});pwrCosts.speed=Math.round(pwrCosts.speed*2.0);updatePwrUI()}};
+document.getElementById('pwr-multi').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.multi&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.multi;const t=Math.floor(Math.random()*BALLS.length);spawn(0,t);spawn(0,t);pwrCosts.multi=Math.round(pwrCosts.multi*2.2);updatePwrUI()}};
 
 addEventListener('keydown',e=>{
  if(e.code=='Space'){e.preventDefault();if(scale){last=scale;setScale(0)}else setScale(last);return}
@@ -570,6 +621,9 @@ function draw(){
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.283);
   if(b.mini){ctx.fillStyle=b.k=='d'||is1P?COL[b.p]:'#6bff95';ctx.fill();continue}
   drawBall(ctx,b.id,BALLS[b.t].color,COL[b.p],b.x,b.y,b.r,Math.atan2(b.uy,b.ux));
+  if(b.fire>0){
+   ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,6.283);ctx.strokeStyle='#ff4500';ctx.lineWidth=2;ctx.stroke();
+  }
   if(b.curved>0){
    ctx.beginPath();ctx.arc(b.x,b.y,b.r+3,0,6.283);ctx.strokeStyle='#e25cff';ctx.lineWidth=1.5;ctx.stroke();
   }
@@ -590,6 +644,6 @@ function loop(t){
  draw();requestAnimationFrame(loop);
 }
 
-document.getElementById('hint').textContent=`1P Idle features procedural shape waves & power-ups. Switch modes via control panel.`;
+document.getElementById('hint').textContent=`1P Idle features procedurally shifting geometries (Hearts, Stars, Spirals) & Idle Breakout power-ups!`;
 init();ui();requestAnimationFrame(t=>{t0=t;loop(t)});
 </script></body></html>
