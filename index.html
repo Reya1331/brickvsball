@@ -1,33 +1,30 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Breakout Duel & Idle</title>
+<title>Idle Breakout 1P</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--panel:#0b0b10;--line:#2c2c3a;--ink:#f2f2f2;--mute:#8f8fa0;--p1:#2f9bff;--p2:#ff4d3d;--gold:#ffe14a}
+:root{--bg:#000;--panel:#0b0b10;--line:#2c2c3a;--ink:#f2f2f2;--mute:#8f8fa0;--p1:#2f9bff;--gold:#ffe14a}
 *{box-sizing:border-box}
-body{margin:0;background:#000;color:var(--ink);font:19px/1.1 VT323,'Courier New',monospace;user-select:none;-webkit-user-select:none}
-#app{display:flex;gap:12px;justify-content:center;align-items:flex-start;padding:12px;flex-wrap:wrap}
-#mid{flex:1 1 560px;max-width:864px;min-width:300px;order:2;position:relative}
-#p0{order:1;border-color:var(--p1)}#p1{order:3;border-color:var(--p2)}
-.pn{width:312px;background:var(--panel);border:3px solid;padding:10px 12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}
-.ph{display:flex;align-items:center;gap:8px}
-.ph h2{margin:0;font:12px 'Press Start 2P',monospace;flex:1}
+body{margin:0;background:#000;color:var(--ink);font:19px/1.1 VT323,'Courier New',monospace;user-select:none;-webkit-user-select:none;overflow:hidden}
+#app{display:flex;justify-content:center;align-items:center;height:100vh;position:relative;gap:12px}
+#mid{flex:0 0 720px;position:relative}
+.pn{position:absolute;width:312px;background:var(--panel);border:3px solid var(--p1);padding:10px 12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin;cursor:grab;z-index:10;left:12px;top:12px}
+.pn:active{cursor:grabbing}
+.ph{display:flex;align-items:center;gap:8px;cursor:pointer}
+.ph h2{margin:0;font:12px 'Press Start 2P',monospace;flex:1;color:var(--p1)}
 .ph b{font:18px 'Press Start 2P',monospace;color:var(--gold)}
 .ph span{color:var(--mute)}
 .sub{color:var(--mute);margin:6px 0}
-.pl{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
-.pd{color:var(--mute);font-size:16px;line-height:1}
 button{font:inherit;color:var(--ink);cursor:pointer;background:#15151f;border:2px solid #4a4a5e;border-radius:0;padding:3px 8px}
 button:hover{background:#25253a;border-color:#8a8aa8}
 button:active{transform:translateY(1px)}
 button:focus-visible{outline:2px solid var(--gold)}
 .off,.off:hover{opacity:.35;cursor:default;background:#15151f;border-color:#4a4a5e}
-.pb{white-space:nowrap}.pb.arm{background:#2a3d66;border-color:#8fb4ff}
 .card{border-top:2px solid #22222c}
 .hd{display:flex;align-items:center;gap:6px;padding:4px 0}
-.tg{flex:1;display:flex;align-items:center;gap:8px;background:none;border:0;text-align:left;padding:2px;font-size:21px}
-.tg:hover{background:none;color:#fff}
+.tg{flex:1;display:flex;align-items:center;gap:8px;background:none;border:0;text-align:left;padding:2px;font-size:21px;color:var(--ink)}
+.tg:hover{color:#fff}
 .tg::after{content:'>';color:var(--mute);margin-left:auto;transition:transform .15s}
 .card.open .tg::after{transform:rotate(90deg)}
 .ic{width:26px;height:26px;flex:none;border:0}
@@ -50,57 +47,42 @@ button:focus-visible{outline:2px solid var(--gold)}
 canvas{width:100%;display:block;background:#000;border:3px solid #444}
 .bars{display:flex;gap:10px;margin-bottom:8px}
 .bars div{flex:1;height:12px;background:#15151f;border:2px solid #444;display:flex}
-.bars div:last-child{justify-content:flex-end}
-.bars i{display:block;height:100%;transition:width .2s}
-#h0{background:var(--p1)}#h1{background:var(--p2)}
+.bars i{display:block;height:100%;background:var(--p1);transition:width .2s}
 .ctl{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--mute);gap:6px;flex-wrap:wrap}
 .ctl button.on{background:#2a3d66;border-color:#8fb4ff}
 .hint{color:var(--mute);font-size:16px;margin:8px 0 0;line-height:1.1}
-#win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:rgba(0,0,0,.85);font:26px 'Press Start 2P',monospace}
-#win button{font-size:20px;padding:6px 18px}
-#ctrl-box{position:fixed;bottom:12px;left:12px;background:var(--panel);border:3px solid #4a4a5e;padding:8px 10px;z-index:99;box-shadow:0 0 10px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:6px;min-width:240px}
+#ctrl-box{position:fixed;bottom:12px;right:12px;background:var(--panel);border:3px solid #4a4a5e;padding:8px 10px;z-index:99;box-shadow:0 0 10px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:6px;min-width:220px}
 #ctrl-box h3{margin:0 0 4px;font:11px 'Press Start 2P',monospace;color:var(--gold)}
 #ctrl-box .btn-group{display:flex;gap:4px;flex-wrap:wrap}
 #ctrl-box button{font-size:14px;padding:2px 6px;flex:1}
-#ctrl-box input{background:#15151f;border:2px solid #4a4a5e;color:var(--ink);font:inherit;width:60px;padding:2px 4px;text-align:center}
 .pwr-section{display:flex;flex-direction:column;gap:4px;margin-top:4px}
 .pwr-row{display:flex;gap:4px}
 .pwr-row button{background:#1a2c3a;border-color:#4a82a8;font-size:12px;flex:1}
 #trivia-box{margin-top:6px;font-size:15px;color:var(--gold);background:#12121a;border:1px dashed #4a4a5e;padding:4px 6px;min-height:36px}
 </style></head><body>
 <div id="app">
- <div class="pn" id="p0"></div>
+ <div class="pn" id="panel">
+  <div class="ph" id="panel-handle"><h2>Idle Breakout</h2><b id="coin-disp">40</b><span>coins</span></div>
+  <p class="sub" id="sub-disp">0/40 balls</p>
+  <div id="shop-container"></div>
+ </div>
  <div id="mid">
-  <div class="bars"><div><i id="h0"></i></div><div><i id="h1"></i></div></div>
+  <div class="bars"><div><i id="h-bar" style="width:100%"></i></div></div>
   <canvas id="cv"></canvas>
   <div class="ctl"><span id="hud"></span></div>
   <p class="hint" id="hint"></p>
-  <div id="win"><span id="wt"></span><button id="re">Rematch</button></div>
  </div>
- <div class="pn" id="p1"></div>
 </div>
 
 <div id="ctrl-box">
  <h3>Control Panel</h3>
- <div class="btn-group">
-  <button id="m1p">1P Idle</button>
-  <button id="m2p" class="on">2P Duel</button>
- </div>
  <div class="btn-group" id="spd-ctrl">
   <button data-s="0">Pause</button>
   <button data-s="1" class="on">1x</button>
   <button data-s="2">2x</button>
   <button data-s="4">4x</button>
  </div>
- <div class="btn-group" style="align-items:center">
-  <span style="font-size:14px">Start Coin:</span>
-  <input type="number" id="start-coin-input" value="40" min="0" max="5000">
- </div>
- <div class="btn-group">
-  <button id="auto-brick">Auto-Brick: OFF</button>
-  <button id="rst-game">Reset</button>
- </div>
- <div class="pwr-section" id="pwr-container" style="display:none">
+ <div class="pwr-section">
   <div class="pwr-row">
    <button id="pwr-free">Free Ball (<span id="c-free">50</span>)</button>
    <button id="pwr-fire">Fireball (<span id="c-fire">200</span>)</button>
@@ -116,9 +98,6 @@ canvas{width:100%;display:block;background:#000;border:3px solid #444}
 <script>
 const CFG={
  brickHP:5,
- brickText:true,
- placeBricks:12,
- brickCap:10,
  startCoins:40,
  coinsPerHP:5,
  trickle:2,
@@ -127,14 +106,13 @@ const CFG={
  buyGrow:1.22,
  upGrow:1.6,
  maxLevel:5,
- unit:80,
- suddenDeath:{start:300,len:300,floor:.15}
+ unit:80
 };
 
 const BRICK_PALETTE=['#ff4d4d','#ff944d','#ffd24d','#4dff4d','#4dffff','#4d79ff','#b34dff','#ff4db3'];
 const TRIVIA_FACTS=[
  "Idle Fact: Free ball power-ups scale with your highest ball cost!",
- "Trivia: The Heart shape map layout requires precision angled bounces to clear.",
+ "Trivia: Structured map layouts require precision angled bounces to clear.",
  "Idle Tip: Purchasing Fireball power-ups instantly vaporizes surrounding tile health.",
  "Did you know? Star shaped maps feature central high-health core matrices.",
  "Idle Strategy: Balance upgrading ball damage with multi-ball acquisition for maximum idle income!"
@@ -144,73 +122,39 @@ const f=x=>+x.toFixed(2),pc=x=>Math.round(x*100)+'%';
 
 const BALLS=[
 {id:'basic',name:'Basic',color:'#f2f5ff',r:6,cost:20,
- desc:'Reliable all-rounder. Damages enemy bricks, heals your own.',
- base:{dmg:1,spd:1.05,heal:.3},
- ups:[['Sharpened Edge','Damage on enemy bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.25]}],
-      ['Tailwind','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}],
-      ['Soft Core','Healing on your bricks',s=>f(s.heal)+' heal',{heal:['+',.15]}]],
- info:s=>`${f(s.dmg)} dmg · ${f(s.heal)} heal · ${f(s.spd)} spd`},
+ desc:'Reliable all-rounder. Damages bricks and generates income.',
+ base:{dmg:1,spd:1.05},
+ ups:[['Sharpened Edge','Damage on bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.25]}],
+      ['Tailwind','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]]},
 {id:'plasma',name:'Plasma',color:'#b987ff',r:8,cost:90,upBase:100,upGrow:1.6,
- desc:'Slow and heavy. Splashes damage (or healing) to every touching brick.',
- base:{dmg:.75,spd:.61,sp:.25,heal:.15,hs:.5},
+ desc:'Slow and heavy. Splashes damage to every touching brick.',
+ base:{dmg:.75,spd:.61,sp:.25},
  ups:[['Overcharge','Direct damage',s=>f(s.dmg)+' dmg',{dmg:['+',.3]}],
-      ['Chain Reaction','Splash damage to touching bricks',s=>pc(s.sp),{sp:['+',.15]}],
-      ['Ion Field','Healing (splash is half of it)',s=>f(s.heal)+' heal',{heal:['+',.1]}],
-      ['Thrusters','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.9]}]],
- info:s=>`${f(s.dmg)} dmg, ${pc(s.sp)} splash · ${f(s.heal)} heal · ${f(s.spd)} spd`},
+      ['Chain Reaction','Splash damage',s=>pc(s.sp),{sp:['+',.15]}],
+      ['Thrusters','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.9]}]]},
 {id:'sniper',name:'Sniper',color:'#ffe14a',r:5,cost:1450,
- desc:'Weak hits, but its glowing charged shot punches through a line of bricks.',
+ desc:'Weak hits, but charged shot pierces through a line of bricks.',
  base:{dmg:.4,spd:1.05,ct:3,pn:2,pb:.2},
- ups:[['Scope','Time to recharge the piercing shot',s=>f(s.ct)+'s',{ct:['+',-.35,{min:1.25}]}],
-      ['Armor-Piercing','Bricks pierced behind target',s=>s.pn+' bricks',{pn:['+',.5,{int:true}]}],
-      ['Hollow Point','Bonus damage per brick pierced',s=>'+'+f(s.pb)+' each',{pb:['+',.08]}],
-      ['Light Rifle','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]],
- info:s=>`${f(s.dmg)} dmg · shot every ${f(s.ct)}s pierces ${s.pn} · ${f(s.spd)} spd`},
+ ups:[['Scope','Time to recharge',s=>f(s.ct)+'s',{ct:['+',-.35,{min:1.25}]}],
+      ['Armor-Piercing','Bricks pierced',s=>s.pn+' bricks',{pn:['+',.5,{int:true}]}],
+      ['Light Rifle','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]]},
 {id:'scatter',name:'Scatter',color:'#4affc8',r:6,cost:4670,
  desc:'Fast. Spawns mini balls on brick/wall hits.',
- base:{dmg:.5,spd:1.4,mn:2,ml:2,md:.3,mh:.6,msp:3.5},
- ups:[['Extra Shrapnel','Minis spawned per hit',s=>s.mn+' minis',{mn:['+',.5,{int:true}]}],
-      ['Long Fuse','Bounces before a mini fades',s=>s.ml+' bounces',{ml:['+',1]}],
-      ['Fragmentation','Mini damage and heal',s=>`${f(s.md)} dmg / ${f(s.mh)} heal`,{md:['+',.12],mh:['+',.2]}],
-      ['Rocket Fuel','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]],
- info:s=>`${f(s.dmg)} dmg · ${s.mn} minis/hit · ${f(s.spd)} spd`},
-{id:'cannon',name:'Cannonball',color:'#ff9a3c',r:10,cost:25000,upBase:150,upGrow:1.65,
- desc:'Slowest ball, biggest hit. Hurts your own bricks too.',
- base:{dmg:3,spd:.53,fr:2,sh:0,pierceBreak:0},
- ups:[['Heavier Powder','Damage on enemy bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.8]}],
-      ['Demolition Charge','Determines if ball bounces/continues when it breaks a brick',s=>s.pierceBreak?'Pierces On Break':'Bounces On Break',{pierceBreak:['+',1,{int:true,max:1}]}],
-      ['Shockwave','Damage to bricks touching target',s=>pc(s.sh),{sh:['+',.15]}],
-      ['Propellant','Ball speed',s=>f(s.spd)+' spd',{spd:['*',1]}]],
- info:s=>`${f(s.dmg)} dmg · ${s.pierceBreak?'Pierces on break':'Bounces on break'} · ${f(s.spd)} spd`},
-{id:'medic',name:'Medic',color:'#5aff7a',r:7,cost:1200,
- desc:'No damage. Heals your bricks it touches; ignores enemy bricks.',
- base:{heal:1.2,au:0,spd:.88},
- ups:[['Stronger Serum','Healing per hit',s=>f(s.heal)+' heal',{heal:['+',.4]}],
-      ['Healing Aura','Heal on bricks touching target',s=>pc(s.au),{au:['+',.15]}],
-      ['Quick Cart','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]],
- info:s=>`${f(s.heal)} heal · ${pc(s.au)} aura · ${f(s.spd)} spd`},
-{id:'homing',name:'Homing',color:'#ff6bd6',r:6,cost:1600,
- desc:'Steers toward the nearest target brick. Needs Tracking to turn sharply.',
- base:{dmg:.8,spd:1.05,turn:.3},
- ups:[['Warhead','Damage on enemy bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.25]}],
-      ['Tracking','How sharply it steers',s=>f(s.turn)+' rad/s',{turn:['+',.3]}],
-      ['Afterburner','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]],
- info:s=>`${f(s.dmg)} dmg · turn ${f(s.turn)} rad/s · ${f(s.spd)} spd`},
-{id:'synerget',name:'Synerget',color:'#e25cff',r:7,cost:4500,upBase:120,
- desc:'Collides with balls. Infuses homing on hit; merges 2 balls touched within 5s.',
- base:{dmg:.5,spd:1.3,synergy:1},
- ups:[['Flux Core','Damage on enemy bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.3]}],
-      ['Graviton Lens','Speed of Synerget',s=>f(s.spd)+' spd',{spd:['*',.8]}],
-      ['Resonance','Bonus damage shared on collision',s=>'+'+f(s.dmg*.2)+' dmg',{dmg:['+',.15]}]],
- info:s=>`${f(s.dmg)} dmg · Collides & Combines Balls · ${f(s.spd)} spd`}
+ base:{dmg:.5,spd:1.4,mn:2,ml:2,md:.3,msp:3.5},
+ ups:[['Extra Shrapnel','Minis spawned',s=>s.mn+' minis',{mn:['+',.5,{int:true}]}],
+      ['Long Fuse','Bounces before fade',s=>s.ml+' bounces',{ml:['+',1]}],
+      ['Rocket Fuel','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]]},
+ {id:'synerget',name:'Synerget',color:'#e25cff',r:7,cost:4500,upBase:120,
+ desc:'Collides with balls. Merges 2 balls touched within 5s.',
+ base:{dmg:.5,spd:1.3},
+ ups:[['Flux Core','Damage on bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.3]}],
+      ['Graviton Lens','Speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]]}
 ];
 
-const CW=36,CH=28,COLS=24,ROWS=20,SIDE=6,W=COLS*CW,H=ROWS*CH,MAXHP=CFG.brickHP,MAXLV=CFG.maxLevel,SD=CFG.suddenDeath;
-const COL=['#2f9bff','#ff4d3d'];
-const SC=BALLS.findIndex(b=>b.id=='scatter');
-let is1P=false,wave1P=1,autoBrick=false,startCoinsVal=40;
-
-// Idle Breakout Powerup Costs
+const CW=30,CH=24,COLS=24,ROWS=20,W=COLS*CW,H=ROWS*CH;
+let wave1P=1,scale=1,acc=0,t0=0,gt=0;
+let hp=[],fl=new Float32Array(ROWS*COLS),balls=[],mon=CFG.startCoins,earn=0,rate=0;
+let lv=BALLS.map(b=>b.ups.map(()=>0)),cnt=BALLS.map(()=>0),S=[];
 let pwrCosts={free:50,fire:200,speed:500,multi:1500};
 
 function calcStat(b,l){
@@ -220,293 +164,162 @@ function calcStat(b,l){
   if(o.min!=null)x=Math.max(o.min,x);if(o.max!=null)x=Math.min(o.max,x);if(o.int)x=Math.floor(x+1e-9);s[k]=x}});
  return s;
 }
+function refreshStats(){S=BALLS.map((b,i)=>calcStat(b,lv[i]))}
 
-let hp,fl,bl,arm,mouse=null,balls,mon,earn,rate,lv,cnt,mc,S,alive,over,gt,hm,scale=1,acc=0,t0=0,last=1;
-const open=[BALLS.map((b,i)=>i==0),BALLS.map((b,i)=>i==0)];
-const own=c=>is1P?1:(c<COLS/2?0:1);
-const clamp=(v,a,b)=>v<a?a:v>b?b:v;
-
-function refresh(p,i){S[p][i]=calcStat(BALLS[i],lv[p][i])}
-
-function initField1P(){
+function initField(){
  hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
- alive[1]=0;
- const shapeType=(wave1P-1)%8;
+ const shapeType=(wave1P-1)%5;
  for(let r=0;r<ROWS;r++){
   for(let c=0;c<COLS;c++){
    let active=false;
-   if(shapeType===0){ // Heart shape
+   if(shapeType===0){ // Heart
     const x=(c-COLS/2)/(COLS/4),y=-(r-ROWS/2)/(ROWS/4);
-    const eqn=Math.pow(x*x+y*y-1,3)-x*x*y*y*y;
-    if(eqn<=0&&r>=2&&r<=ROWS-3)active=true;
-   }else if(shapeType===1){ // Star shape
+    if(Math.pow(x*x+y*y-1,3)-x*x*y*y*y<=0&&r>=2&&r<=ROWS-3)active=true;
+   }else if(shapeType===1){ // Star
     const dr=ROWS/2,dc=COLS/2;
     const angle=Math.atan2(r-dr,c-dc),dist=Math.hypot(r-dr,c-dc);
-    if(dist<=8+Math.sin(angle*5)*3)active=true;
-   }else if(shapeType===2){ // Spiral labyrinth
+    if(dist<=7+Math.sin(angle*5)*2.5)active=true;
+   }else if(shapeType===2){ // Diamond Citadel
+    const dr=ROWS/2,dc=COLS/2;
+    if(Math.abs(r-dr)+Math.abs(c-dc)<=8)active=true;
+   }else if(shapeType===3){ // Perimeter & Core pillars
+    if(r===1||r===ROWS-2||c===1||c===COLS-2||(r===Math.floor(ROWS/2)&&c%2===0))active=true;
+   }else{ // Spiral Fortress
     const dr=ROWS/2,dc=COLS/2;
     const angle=Math.atan2(r-dr,c-dc),dist=Math.hypot(r-dr,c-dc);
-    if(Math.abs((dist)-(angle+wave1P)*2)%4<1.5&&dist<=9)active=true;
-   }else if(shapeType===3){ // Diamond fortress
-    const dr=ROWS/2,dc=COLS/2;
-    if(Math.abs(r-dr)+Math.abs(c-dc)<=9)active=true;
-   }else if(shapeType===4){ // Wall Borders & Perimeter Defense
-    if(r===1||r===ROWS-2||c===1||c===COLS-2||(r+c)%3===0)active=true;
-   }else if(shapeType===5){ // Hourglass Wall Anchors
-    if(r>=2&&r<=ROWS-3&&(c<=r||c>=COLS-1-r||c===Math.floor(COLS/2)))active=true;
-   }else if(shapeType===6){ // Crosshairs & Wall Shields
-    if(r===Math.floor(ROWS/2)||c===Math.floor(COLS/2)||c===2||c===COLS-3)active=true;
-   }else{ // Massive Citadel Grid
-    if(r>=2&&r<=ROWS-3&&c>=2&&c<=COLS-3&&(r%2===0||c%3===0))active=true;
+    if(Math.abs(dist-(angle+wave1P)*1.8)%3<1.2&&dist<=8)active=true;
    }
    if(active){
-    hp[r][c]=Math.min(30,wave1P*1.5+Math.floor(Math.random()*3));
-    alive[1]++;
+    // Primary level challenge with structured outline/wall strength offsets
+    let h=Math.max(1, wave1P + ((r===1||r===ROWS-2||c===1||c===COLS-2)?2:0));
+    hp[r][c]=h;
    }
   }
  }
 }
 
 function init(){
- startCoinsVal=parseInt(document.getElementById('start-coin-input').value)||40;
- hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
- fl=new Float32Array(ROWS*COLS);alive=[0,0];bl=[CFG.placeBricks,CFG.placeBricks];arm=[false,false];
- balls=[];mon=[startCoinsVal,startCoinsVal];earn=[0,0];rate=[0,0];mc=[0,0];over=-1;gt=0;hm=1;
- pwrCosts={free:50,fire:200,speed:500,multi:1500};
- lv=[0,1].map(()=>BALLS.map(b=>b.ups.map(()=>0)));cnt=[0,1].map(()=>BALLS.map(()=>0));
- S=[0,1].map(()=>[]);for(let p=0;p<2;p++)BALLS.forEach((b,i)=>refresh(p,i));
-
- if(is1P){
-  wave1P=1;
-  initField1P();
-  spawn(0,0); // Spawns cleanly on player 0 side (left/center)
-  document.getElementById('p0').style.display='none';
-  document.getElementById('p1').style.display='block';
-  document.getElementById('pwr-container').style.display='flex';
- }else{
-  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(c<SIDE||c>=COLS-SIDE)hp[r][c]=MAXHP;
-  alive=[ROWS*SIDE,ROWS*SIDE];
-  spawn(0,0);spawn(1,0);
-  document.getElementById('p0').style.display='block';
-  document.getElementById('p1').style.display='block';
-  document.getElementById('pwr-container').style.display='none';
- }
- document.getElementById('win').style.display='none';
+ mon=parseInt(document.getElementById('start-coin-input')?.value||CFG.startCoins);
+ wave1P=1;gt=0;balls=[];earn=0;rate=0;
+ lv=BALLS.map(b=>b.ups.map(()=>0));cnt=BALLS.map(()=>0);
+ refreshStats();
+ initField();
+ spawn(0);
+ buildShop();
  updatePwrUI();
 }
 
-function spawn(p,t=0){
- const y=40+Math.random()*(H-80);
- let a=(Math.random()-.5)*1.6;
- const startX=is1P?(W/2):(p?W-SIDE*CW-10:SIDE*CW+10);
- balls.push({p:is1P?0:p,t,id:BALLS[t].id,x:startX,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,tg:null,tt:0,synHits:[],curved:0,mergedId:null,customS:null,fire:0});
- cnt[is1P?0:p][t]++;
+function spawn(t=0){
+ const y=H/2+(Math.random()-.5)*60,x=W/2+(Math.random()-.5)*60;
+ const a=Math.random()*6.283;
+ balls.push({t,id:BALLS[t].id,x,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,tg:null,tt:0,fire:0});
+ cnt[t]++;
 }
 
-const buyCost=(p,i)=>Math.round(BALLS[i].cost*CFG.buyGrow**(cnt[p][i]-(i==0?1:0)));
-const upCost=(p,i,j)=>{const b=BALLS[i];return Math.round((b.upBase??Math.max(20,b.cost*.9))*(b.upGrow??CFG.upGrow)**lv[p][i][j])};
-const owned=p=>cnt[p].reduce((a,b)=>a+b,0);
-const getc=(p,v)=>{mon[p]+=v;earn[p]+=v};
+const buyCost=i=>Math.round(BALLS[i].cost*CFG.buyGrow**(cnt[i]-(i==0?1:0)));
+const upCost=(i,j)=>Math.round((BALLS[i].upBase??Math.max(20,BALLS[i].cost*.9))*(BALLS[i].upGrow??CFG.upGrow)**lv[i][j]);
+const owned=()=>cnt.reduce((a,b)=>a+b,0);
 
-function buy(p,i){if(over>=0||i>=BALLS.length||owned(p)>=CFG.ballCap)return;const c=buyCost(p,i);if(mon[p]<c)return;mon[p]-=c;spawn(p,i)}
-function up(p,i,j){if(over>=0)return;const l=lv[p][i][j];if(l>=MAXLV)return;const c=upCost(p,i,j);if(mon[p]<c)return;mon[p]-=c;lv[p][i][j]++;refresh(p,i)}
+function buy(i){const c=buyCost(i);if(mon<c||owned()>=CFG.ballCap)return;mon-=c;spawn(i);updateShop()}
+function up(i,j){if(lv[i][j]>=CFG.maxLevel)return;const c=upCost(i,j);if(mon<c)return;mon-=c;lv[i][j]++;refreshStats();updateShop()}
 
-function place(p,r,c){
- if(over>=0||bl[p]<=0||r<0||r>=ROWS||c<0||c>=COLS)return;
- if(!is1P&&own(c)!==p)return;
- if(hp[r][c]>0){if(hp[r][c]>=CFG.brickCap)return;hp[r][c]+=1}else{hp[r][c]=1;alive[p]++}
- fl[r*COLS+c]=1;if(--bl[p]<=0)arm[p]=false;
-}
-
-function dmg(r,c,a,p,ballRef=null){
+function dmg(r,c,a,ballRef){
  if(r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0||a<=0)return;
- const o=own(c),x=Math.min(hp[r][c],a);
- if(ballRef&&ballRef.fire)x*=2.5; // Fireball bonus damage
+ let x=Math.min(hp[r][c],a);
+ if(ballRef&&ballRef.fire)x*=2.5;
  hp[r][c]-=x;fl[r*COLS+c]=1;
- if(is1P||o!==p)getc(p,x*CFG.coinsPerHP*(is1P?wave1P:1));
- if(hp[r][c]<=.001){
-  hp[r][c]=0;alive[o]--;
-  if(ballRef&&ballRef.id==='cannon'){
-   const s=ballRef.customS||S[ballRef.p][ballRef.t];
-   if(!s.pierceBreak){ballRef.ux=-ballRef.ux;ballRef.uy=-ballRef.uy}
-  }
-  if(is1P){
-   if(alive[1]<=0){wave1P++;initField1P()}
-  }else if(!alive[o]&&over<0){over=1-o;showWin()}
+ mon+=x*CFG.coinsPerHP*wave1P;earn+=x*CFG.coinsPerHP*wave1P;
+ if(hp[r][c]<=0.001){
+  hp[r][c]=0;
+  // Check if any bricks remain
+  let remaining=0;
+  for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<COLS;cc++)if(hp[rr][cc]>0)remaining++;
+  if(remaining===0){wave1P++;initFieldStage()}
  }
 }
 
-function heal(r,c,a){if(is1P||r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0)return;hp[r][c]=Math.max(hp[r][c],Math.min(MAXHP,hp[r][c]+a*hm))}
-function nb(r,c,fn){const o=own(c);[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([a,e])=>{if(e>=0&&e<COLS&&own(e)===o)fn(a,e)})}
-
-function minis(b,k){
- const s=b.customS||S[b.p][SC];
- for(let i=0;i<s.mn&&mc[b.p]<CFG.miniCap;i++){
-  const a=Math.random()*6.283,kk=k=='w'?(Math.random()<.5?'d':'h'):k;
-  balls.push({p:b.p,t:SC,id:'scatter',mini:1,k:kk,x:b.x,y:b.y,ux:Math.cos(a),uy:Math.sin(a),r:3,life:s.ml});mc[b.p]++;
- }
-}
-
-function onHit(b,r,c,dx,dy){
- const p=b.p,o=own(c)===p&&!is1P,s=b.customS||S[p][b.t];
- if(b.mini){if(b.k=='d'||is1P)dmg(r,c,s.md,p,b);else if(b.k=='h'&&!is1P&&o)heal(r,c,s.mh);b.life--;return}
- const d=s.dmg||0;
- const curId=b.mergedId||b.id;
-
- switch(curId){
- case 'basic':o&&!is1P?heal(r,c,s.heal):dmg(r,c,d,p,b);break;
- case 'plasma':if(o&&!is1P){heal(r,c,s.heal);nb(r,c,(a,e)=>heal(a,e,s.heal*s.hs))}else{dmg(r,c,d,p,b);nb(r,c,(a,e)=>dmg(a,e,d*s.sp,p))}break;
- case 'sniper':if(o&&!is1P)break;if(b.ch>=s.ct){b.ch=0;for(let n=0;n<=s.pn;n++)if(is1P||own(c+dx*n)===own(c))dmg(r+dy*n,c+dx*n,s.dmg+n*s.pb,p,b)}else dmg(r,c,d,p,b);break;
- case 'scatter':if(!o||is1P)dmg(r,c,d,p,b);minis(b,o&&!is1P?'h':'d');break;
- case 'cannon':if(o&&!is1P)dmg(r,c,s.fr,p,b);else{dmg(r,c,d,p,b);if(s.sh)nb(r,c,(a,e)=>dmg(a,e,d*s.sh,p))}break;
- case 'medic':if(o&&!is1P){heal(r,c,s.heal);if(s.au)nb(r,c,(a,e)=>heal(a,e,s.heal*s.au))}break;
- case 'homing':case 'synerget':dmg(r,c,d,p,b);break;
- default:dmg(r,c,d,p,b);
- }
-}
-
-function fix(b){
- let ux=b.ux,uy=b.uy;const m=.28;
- if(Math.abs(ux)<m)ux=(ux<0?-1:1)*m;if(Math.abs(uy)<m)uy=(uy<0?-1:1)*m;
- const l=Math.hypot(ux,uy);b.ux=ux/l;b.uy=uy/l;
-}
-
-function retarget(b){
- let best=1e12,tg=null;
- for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(hp[r][c]>0){
-  const d=(c*CW+CW/2-b.x)**2+(r*CH+CH/2-b.y)**2;if(d<best){best=d;tg=[c*CW+CW/2,r*CH+CH/2]}}
- b.tg=tg;
-}
-
-function handleBallCollisions(){
- for(let i=0;i<balls.length;i++){
-  for(let j=i+1;j<balls.length;j++){
-   const b1=balls[i],b2=balls[j];
-   if(b1.mini||b2.mini)continue;
-   if(b1.id!=='synerget'&&b2.id!=='synerget')continue;
-   const dx=b2.x-b1.x,dy=b2.y-b1.y,d=Math.hypot(dx,dy);
-   if(d<b1.r+b2.r&&d>0){
-    const nx=dx/d,ny=dy/d;
-    const kx=b1.ux-b2.ux,ky=b1.uy-b2.uy;
-    const p=nx*kx+ny*ky;
-    b1.ux-=p*nx;b1.uy-=p*ny;b2.ux+=p*nx;b2.uy+=p*ny;
-    fix(b1);fix(b2);
-    const syn=b1.id==='synerget'?b1:b2;
-    const oth=b1.id==='synerget'?b2:b1;
-    oth.curved=3;
-    const now=gt;
-    syn.synHits=syn.synHits.filter(h=>now-h.t<5&&h.b!==oth);
-    syn.synHits.push({b:oth,t:now});
-    if(syn.synHits.length>=2){
-     const bA=syn.synHits[0].b,bB=syn.synHits[1].b;
-     const sA=bA.customS||S[bA.p][bA.t],sB=bB.customS||S[bB.p][bB.t];
-     syn.customS={
-      dmg:((sA.dmg||0)+(sB.dmg||0))/2,
-      spd:((sA.spd||1)+(sB.spd||1))/2,
-      heal:((sA.heal||0)+(sB.heal||0))/2,
-      sp:Math.max(sA.sp||0,sB.sp||0),
-      hs:Math.max(sA.hs||0,sB.hs||0),
-      ct:Math.min(sA.ct||3,sB.ct||3),
-      pn:Math.max(sA.pn||0,sB.pn||0),
-      pb:Math.max(sA.pb||0,sB.pb||0),
-      mn:Math.max(sA.mn||0,sB.mn||0),
-      ml:Math.max(sA.ml||0,sB.ml||0),
-      md:((sA.md||0)+(sB.md||0))/2,
-      mh:((sA.mh||0)+(sB.mh||0))/2,
-      msp:Math.max(sA.msp||3,sB.msp||3),
-      fr:Math.min(sA.fr||2,sB.fr||2),
-      sh:Math.max(sA.sh||0,sB.sh||0),
-      au:Math.max(sA.au||0,sB.au||0),
-      turn:Math.max(sA.turn||.3,sB.turn||.3)
-     };
-     syn.mergedId=bA.id+'_'+bB.id;
-     syn.synHits=[];
-    }
-   }
-  }
- }
-}
+function initFieldStage(){initField()}
 
 function step(dt){
- gt+=dt;hm=gt<SD.start?1:Math.max(SD.floor,1-(gt-SD.start)/SD.len*(1-SD.floor));
- for(let p=0;p<2;p++)getc(p,CFG.trickle*dt);
-
- if(autoBrick){
-  for(let p=0;p<(is1P?1:2);p++){
-   if(bl[p]>0){
-    const r=Math.floor(Math.random()*ROWS),c=Math.floor(Math.random()*(is1P?COLS:(COLS/2)));
-    place(p,r,p?COLS-1-c:c);
-   }
-  }
- }
-
- handleBallCollisions();
+ gt+=dt;mon+=CFG.trickle*dt;earn+=CFG.trickle*dt;
 
  for(let i=balls.length-1;i>=0;i--){
-  const b=balls[i],s=b.customS||S[b.p][b.t];
+  const b=balls[i],s=S[b.t];
   if(b.id=='sniper')b.ch+=dt;
-  if(b.curved>0)b.curved-=dt;
-  if(b.id=='homing'||b.curved>0||b.fire>0){
-   b.tt-=dt;if(b.tt<=0){b.tt=.2;retarget(b)}
-   if(b.tg){
-    let d=Math.atan2(b.tg[1]-b.y,b.tg[0]-b.x)-Math.atan2(b.uy,b.ux);
-    d=Math.atan2(Math.sin(d),Math.cos(d));
-    const tr=b.curved>0?.8:(s.turn||.3);
-    d=clamp(d,-tr*dt,tr*dt);
-    const a=Math.atan2(b.uy,b.ux)+d;b.ux=Math.cos(a);b.uy=Math.sin(a);
-   }
-  }
-  const sp=(b.mini?s.msp:s.spd)*CFG.unit;
+  const sp=s.spd*CFG.unit;
   b.x+=b.ux*sp*dt;b.y+=b.uy*sp*dt;
   let wh=false;
   if(b.x<b.r){b.x=b.r;b.ux=Math.abs(b.ux);wh=true}else if(b.x>W-b.r){b.x=W-b.r;b.ux=-Math.abs(b.ux);wh=true}
   if(b.y<b.r){b.y=b.r;b.uy=Math.abs(b.uy);wh=true}else if(b.y>H-b.r){b.y=H-b.r;b.uy=-Math.abs(b.uy);wh=true}
-  if(wh){
-   if(b.mini)b.life--;else{if(b.id=='scatter')minis(b,'w');const a=Math.atan2(b.uy,b.ux)+(Math.random()-.5)*.12;b.ux=Math.cos(a);b.uy=Math.sin(a);fix(b)}
-  }
+  if(wh){if(b.id=='scatter'){/* mini spawn */}const a=Math.atan2(b.uy,b.ux)+(Math.random()-.5)*.2;b.ux=Math.cos(a);b.uy=Math.sin(a)}
+
   const c0=Math.max(0,Math.floor((b.x-b.r)/CW)),c1=Math.min(COLS-1,Math.floor((b.x+b.r)/CW));
   const r0=Math.max(0,Math.floor((b.y-b.r)/CH)),r1=Math.min(ROWS-1,Math.floor((b.y+b.r)/CH));
   hit:for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
    if(hp[r][c]<=0)continue;
-   const cx=clamp(b.x,c*CW,c*CW+CW),cy=clamp(b.y,r*CH,r*CH+CH);
-   let dx=b.x-cx,dy=b.y-cy;if(!dx&&!dy)dx=-b.ux;
-   if(dx*dx+dy*dy<b.r*b.r){
-    let sx=0,sy=0;
-    if(Math.abs(dx)>Math.abs(dy)){const g=dx>0?1:-1;b.ux=g*Math.abs(b.ux);b.x=cx+g*b.r;sx=-g}
-    else{const g=dy>0?1:-1;b.uy=g*Math.abs(b.uy);b.y=cy+g*b.r;sy=-g}
-    if(!b.mini)fix(b);
-    onHit(b,r,c,sx,sy);
+   const cx=Math.max(c*CW,Math.min(b.x,c*CW+CW)),cy=Math.max(r*CH,Math.min(b.y,r*CH+CH));
+   if((b.x-cx)**2+(b.y-cy)**2<b.r*b.r){
+    if(Math.abs(b.x-cx)>Math.abs(b.y-cy))b.ux=-b.ux;else b.uy=-b.uy;
+    dmg(r,c,s.dmg,b);
     break hit;
    }
   }
-  if(b.mini&&b.life<=0){balls.splice(i,1);mc[b.p]--}
  }
 }
 
-const P=[document.getElementById('p0'),document.getElementById('p1')];
-const R=[[],[]],H2=[];
+// Build UI
+const shopEl=document.getElementById('shop-container');
+function buildShop(){
+ shopEl.innerHTML=BALLS.map((t,i)=>`
+ <div class="card open">
+  <div class="hd">
+   <button class="tg" onclick="toggleCard(${i})">${t.name} <span class="cn" id="cn-${i}">×${cnt[i]}</span></button>
+   <button class="buy" id="buy-${i}" onclick="buy(${i})">Buy</button>
+  </div>
+  <div class="bd" id="bd-${i}">
+   <p class="ds">${t.desc}</p>
+   <p class="st" id="st-${i}">Now: ${BALLS[i].id}</p>
+   ${t.ups.map((u,j)=>`
+    <div class="u">
+     <div class="ut">${u[0]}<span class="seg" id="seg-${i}-${j}">${'<i></i>'.repeat(CFG.maxLevel)}</span></div>
+     <div class="ud">${u[1]}</div>
+     <div class="uv"><span id="cu-${i}-${j}"></span><em>→</em><span id="nx-${i}-${j}"></span></div>
+     <button class="ub" onclick="up(${i},${j})"><b id="uc-${i}-${j}">0</b><small>Up</small></button>
+    </div>`).join('')}
+  </div>
+ </div>`).join('');
+}
+window.toggleCard=i=>{document.getElementById(`bd-${i}`).parentElement.classList.toggle('open')};
 
-P.forEach((el,p)=>{
- el.innerHTML=`<div class="ph"><h2 style="color:${COL[p]}">Player ${p+1}</h2><b></b><span>coins</span></div><p class="sub"></p><div class="pl"><button class="pb" data-a="p"><span></span><kbd>${p?'N0':'B'}</kbd></button><span class="pd">Click on target half to reinforce</span></div>`+
- BALLS.map((t,i)=>`<div class="card"><div class="hd"><button class="tg" data-a="t" data-i="${i}"><canvas class="ic" width="26" height="26"></canvas>${t.name}<span class="cn"></span></button><button class="buy" data-a="b" data-i="${i}"></button></div>
- <div class="bd"><p class="ds">${t.desc}</p><p class="st"></p>${t.ups.map((u,j)=>is1P&&(u[0].includes('Healing')||u[0].includes('Serum')||u[0].includes('Core')&&j===2)?'':`<div class="u"><div class="ut">${u[0]}<span class="seg">${'<i></i>'.repeat(MAXLV)}</span></div><div class="ud">${u[1]}</div><div class="uv"><span class="cu"></span><em>→</em><span class="nx"></span></div><button class="ub" data-a="u" data-i="${i}" data-j="${j}"><b></b><small>Upgrade</small></button></div>`).join('')}</div></div>`).join('');
- H2[p]={coin:el.querySelector('.ph b'),sub:el.querySelector('.sub'),pb:el.querySelector('.pb'),pt:el.querySelector('.pb span')};
- el.querySelectorAll('.card').forEach((card,i)=>{
-  drawBall(card.querySelector('.ic').getContext('2d'),BALLS[i].id,BALLS[i].color,COL[p],13,13,9,0);
-  R[p][i]={card,cn:card.querySelector('.cn'),buy:card.querySelector('.buy'),bt:card.querySelector('.buy'),st:card.querySelector('.st'),
-   ups:[...card.querySelectorAll('.u')].map(u=>({seg:[...u.querySelectorAll('.seg i')],cu:u.querySelector('.cu'),nx:u.querySelector('.nx'),cost:u.querySelector('.ub b'),sm:u.querySelector('.ub small'),btn:u.querySelector('.ub')}))};
+function updateShop(){
+ document.getElementById('coin-disp').textContent=Math.floor(mon);
+ document.getElementById('sub-disp').textContent=`+${rate.toFixed(1)}/s · ${owned()}/${CFG.ballCap} balls`;
+ BALLS.forEach((t,i)=>{
+  const c=buyCost(i);
+  const buyBtn=document.getElementById(`buy-${i}`);
+  if(buyBtn){buyBtn.textContent='Buy '+c;buyBtn.classList.toggle('off',mon<c||owned()>=CFG.ballCap)}
+  document.getElementById(`cn-${i}`).textContent=`×${cnt[i]}`;
+  document.getElementById(`st-${i}`).textContent=`Now: `+(i===0?`${f(S[i].dmg)} dmg`: t.desc);
+  t.ups.forEach((u,j)=>{
+   const l=lv[i][j],mx=l>=CFG.maxLevel,c2=upCost(i,j);
+   const segs=document.querySelectorAll(`#seg-${i}-${j} i`);
+   segs.forEach((g,k)=>g.classList.toggle('on',k<l));
+   const at=k=>{const a=lv[i].slice();a[j]=k;return u[2](calcStat(t,a))};
+   document.getElementById(`cu-${i}-${j}`).textContent=at(l);
+   document.getElementById(`nx-${i}-${j}`).textContent=mx?'max':at(l+1);
+   document.getElementById(`uc-${i}-${j}`).textContent=mx?'MAX':c2;
+  });
  });
- const act=e=>{
-  const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,a=b.dataset.a;
-  if(a=='p'){if(bl[p]>0&&over<0)arm[p]=!arm[p]}else if(a=='t')open[p][i]=!open[p][i];else if(a=='b')buy(p,i);else if(a=='u')up(p,i,+b.dataset.j);
-  ui();
- };
- el.addEventListener('mousedown',e=>e.preventDefault());
- el.addEventListener('pointerdown',e=>{if(e.button===0||e.pointerType!=='mouse')act(e)});
- el.addEventListener('click',e=>{if(e.detail===0)act(e)});
-});
+}
 
-function set(el,t){if(el._t!==t){el.textContent=t;el._t=t}}
+let pe=0;
+setInterval(()=>{const r=(earn-pe)/.1;pe=earn;rate=rate*.95+r*.05;updateShop();document.getElementById('hud').textContent=`Wave ${wave1P} · Cash: +${rate.toFixed(1)}/s`},100);
+setInterval(()=>{document.getElementById('trivia-box').textContent=TRIVIA_FACTS[Math.floor(Math.random()*TRIVIA_FACTS.length)]},8000);
+
+document.getElementById('pwr-free').onclick=()=>{if(mon>=pwrCosts.free&&balls.length<CFG.ballCap){mon-=pwrCosts.free;spawn(0);pwrCosts.free=Math.round(pwrCosts.free*1.5);updatePwrUI()}};
+document.getElementById('pwr-fire').onclick=()=>{if(mon>=pwrCosts.fire&&balls.length>0){mon-=pwrCosts.fire;balls.forEach(b=>b.fire=10);pwrCosts.fire=Math.round(pwrCosts.fire*1.8);updatePwrUI()}};
+document.getElementById('pwr-speed').onclick=()=>{if(mon>=pwrCosts.speed&&balls.length>0){mon-=pwrCosts.speed;balls.forEach(b=>{b.ux*=1.3;b.uy*=1.3});pwrCosts.speed=Math.round(pwrCosts.speed*2.0);updatePwrUI()}};
+document.getElementById('pwr-multi').onclick=()=>{if(mon>=pwrCosts.multi&&balls.length<CFG.ballCap){mon-=pwrCosts.multi;const t=Math.floor(Math.random()*BALLS.length);spawn(t);spawn(t);pwrCosts.multi=Math.round(pwrCosts.multi*2.2);updatePwrUI()}};
 
 function updatePwrUI(){
  document.getElementById('c-free').textContent=pwrCosts.free;
@@ -515,135 +328,44 @@ function updatePwrUI(){
  document.getElementById('c-multi').textContent=pwrCosts.multi;
 }
 
-function ui(){
- for(let p=0;p<2;p++){
-  set(H2[p].coin,Math.floor(mon[p]));
-  set(H2[p].sub,`+${rate[p].toFixed(1)}/s · ${owned(p)}/${CFG.ballCap} balls`);
-  set(H2[p].pt,`Place brick ×${bl[p]}`);H2[p].pb.classList.toggle('arm',arm[p]);H2[p].pb.classList.toggle('off',bl[p]<=0||over>=0);
-  for(let i=0;i<BALLS.length;i++){
-   const r=R[p][i],c=buyCost(p,i),can=over<0&&mon[p]>=c&&owned(p)<CFG.ballCap;
-   r.card.classList.toggle('open',open[p][i]);
-   set(r.cn,` ×${cnt[p][i]}`);set(r.bt,'Buy '+c);r.buy.classList.toggle('off',!can);
-   if(!open[p][i])continue;
-   set(r.st,'Now: '+BALLS[i].info(S[p][i]));
-   BALLS[i].ups.forEach((u,j)=>{
-    if(is1P&&(u[0].includes('Healing')||u[0].includes('Serum')))return;
-    const l=lv[p][i][j],ref=r.ups[j],mx=l>=MAXLV,c2=upCost(p,i,j);
-    const at=k=>{const a=lv[p][i].slice();a[j]=k;return u[2](calcStat(BALLS[i],a))};
-    ref.seg.forEach((g,k)=>g.classList.toggle('on',k<l));set(ref.cu,at(l));set(ref.nx,mx?'max':at(l+1));ref.nx.classList.toggle('mx',mx);
-    set(ref.cost,mx?'MAX':String(c2));set(ref.sm,mx?'':'Upgrade');ref.btn.classList.toggle('off',mx||over>=0||mon[p]<c2);
-   });
-  }
- }
- const m=Math.floor(gt/60),s=Math.floor(gt%60);
- set(document.getElementById('hud'),is1P?`Wave ${wave1P} · ${m}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')} · healing ${Math.round(hm*100)}%`);
+// Draggable panel logic
+const panel=document.getElementById('panel'),handle=document.getElementById('panel-handle');
+let isDrag=false,startX=0,startY=0;
+handle.onpointerdown=e=>{isDrag=true;startX=e.clientX-panel.offsetLeft;startY=e.clientY-panel.offsetTop;handle.setPointerCapture(e.pointerId)};
+handle.onpointermove=e=>{if(!isDrag)return;panel.style.left=(e.clientX-startX)+'px';panel.style.top=(e.clientY-startY)+'px'};
+handle.onpointerup=e=>{isDrag=false};
 
- document.getElementById('pwr-free').classList.toggle('off',mon[0]<pwrCosts.free);
- document.getElementById('pwr-fire').classList.toggle('off',mon[0]<pwrCosts.fire);
- document.getElementById('pwr-speed').classList.toggle('off',mon[0]<pwrCosts.speed);
- document.getElementById('pwr-multi').classList.toggle('off',mon[0]<pwrCosts.multi);
-}
-
-let pe=[0,0];
-setInterval(()=>{for(let p=0;p<2;p++){const r=(earn[p]-pe[p])/.1;pe[p]=earn[p];rate[p]=rate[p]*.95+r*.05}ui()},100);
-setInterval(()=>{const fact=TRIVIA_FACTS[Math.floor(Math.random()*TRIVIA_FACTS.length)];document.getElementById('trivia-box').textContent=fact},8000);
-
-function showWin(){const w=document.getElementById('win'),t=document.getElementById('wt');t.textContent=`Player ${over+1} wins`;t.style.color=COL[over];w.style.display='flex'}
-document.getElementById('re').onclick=()=>{init();pe=[0,0]};
-
-document.getElementById('spd-ctrl').onclick=e=>{const b=e.target.closest('button');if(b)setScale(+b.dataset.s)};
-function setScale(s){scale=s;document.querySelectorAll('#spd-ctrl button').forEach(b=>b.classList.toggle('on',+b.dataset.s===s))}
-
-document.getElementById('m1p').onclick=()=>{is1P=true;document.getElementById('m1p').classList.add('on');document.getElementById('m2p').classList.remove('on');init()};
-document.getElementById('m2p').onclick=()=>{is1P=false;document.getElementById('m2p').classList.add('on');document.getElementById('m1p').classList.remove('on');init()};
-document.getElementById('auto-brick').onclick=()=>{autoBrick=!autoBrick;document.getElementById('auto-brick').textContent='Auto-Brick: '+(autoBrick?'ON':'OFF');document.getElementById('auto-brick').classList.toggle('on',autoBrick)};
-document.getElementById('rst-game').onclick=()=>init();
-
-// Idle Breakout Power-ups functionality
-document.getElementById('pwr-free').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.free&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.free;spawn(0,0);pwrCosts.free=Math.round(pwrCosts.free*1.5);updatePwrUI()}};
-document.getElementById('pwr-fire').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.fire&&balls.length>0){mon[0]-=pwrCosts.fire;balls.forEach(b=>b.fire=10);pwrCosts.fire=Math.round(pwrCosts.fire*1.8);updatePwrUI()}};
-document.getElementById('pwr-speed').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.speed&&balls.length>0){mon[0]-=pwrCosts.speed;balls.forEach(b=>{b.ux*=1.3;b.uy*=1.3});pwrCosts.speed=Math.round(pwrCosts.speed*2.0);updatePwrUI()}};
-document.getElementById('pwr-multi').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.multi&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.multi;const t=Math.floor(Math.random()*BALLS.length);spawn(0,t);spawn(0,t);pwrCosts.multi=Math.round(pwrCosts.multi*2.2);updatePwrUI()}};
-
-addEventListener('keydown',e=>{
- if(e.code=='Space'){e.preventDefault();if(scale){last=scale;setScale(0)}else setScale(last);return}
- if(e.code=='KeyB'&&bl[0]>0&&over<0)arm[0]=!arm[0];
- if(e.code=='Numpad0'&&bl[1]>0&&over<0)arm[1]=!arm[1];
- if(e.code=='Escape')arm=[false,false];
-});
-
+// Canvas render
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
 cv.width=W*dpr;cv.height=H*dpr;
-const cell=e=>{const q=cv.getBoundingClientRect();return[Math.floor((e.clientY-q.top)/q.height*ROWS),Math.floor((e.clientX-q.left)/q.width*COLS)]};
-cv.addEventListener('pointerdown',e=>{const[r,c]=cell(e);if(c<0||c>=COLS)return;const o=own(c);if(o>=0&&arm[o])place(o,r,c);ui()});
-cv.addEventListener('pointermove',e=>{mouse=cell(e)});
-cv.addEventListener('pointerleave',()=>{mouse=null});
-
-function drawBall(g,id,color,ring,x,y,r,ang){
- g.beginPath();g.arc(x,y,r,0,6.283);g.fillStyle=color;g.fill();g.lineWidth=2;g.strokeStyle=ring;g.stroke();
- g.save();g.translate(x,y);g.strokeStyle=g.fillStyle='#10151f';g.lineWidth=Math.max(1.2,r*.2);g.lineCap='round';g.lineJoin='round';
- const u=r*.58;g.beginPath();
- switch(id){
- case'basic':g.arc(0,0,u*.45,0,6.283);g.fill();break;
- case'plasma':g.moveTo(u*.3,-u);g.lineTo(-u*.5,u*.1);g.lineTo(u*.1,u*.1);g.lineTo(-u*.3,u);g.lineTo(u*.5,-u*.1);g.lineTo(-u*.1,-u*.1);g.closePath();g.fill();break;
- case'sniper':g.arc(0,0,u*.7,0,6.283);g.moveTo(-u*1.2,0);g.lineTo(u*1.2,0);g.moveTo(0,-u*1.2);g.lineTo(0,u*1.2);g.stroke();break;
- case'scatter':[[0,-.55],[-.6,.4],[.6,.4]].forEach(([a,b])=>{g.moveTo(a*u+u*.32,b*u);g.arc(a*u,b*u,u*.32,0,6.283)});g.fill();break;
- case'cannon':for(let k=0;k<4;k++){const a=k*Math.PI/4;g.moveTo(-Math.cos(a)*u*1.1,-Math.sin(a)*u*1.1);g.lineTo(Math.cos(a)*u*1.1,Math.sin(a)*u*1.1)}g.stroke();break;
- case'medic':g.moveTo(-u,0);g.lineTo(u,0);g.moveTo(0,-u);g.lineTo(0,u);g.stroke();break;
- case'homing':g.rotate(ang);g.moveTo(u*1.1,0);g.lineTo(-u*.8,-u*.8);g.lineTo(-u*.5,0);g.lineTo(-u*.8,u*.8);g.closePath();g.fill();break;
- case'synerget':g.arc(0,0,u*.8,0,6.283);g.moveTo(-u*.9,-u*.9);g.lineTo(u*.9,u*.9);g.moveTo(u*.9,-u*.9);g.lineTo(-u*.9,u*.9);g.stroke();break;
- }
- g.restore();
-}
 
 function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
- if(!is1P){
-  ctx.fillStyle='rgba(47,155,255,.06)';ctx.fillRect(0,0,W/2,H);
-  ctx.fillStyle='rgba(255,77,61,.06)';ctx.fillRect(W/2,0,W/2,H);
-  ctx.strokeStyle='#26324a';ctx.setLineDash([6,8]);ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
- }
- const sum=[0,0];
  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-  const h=hp[r][c];if(h<=0)continue;const o=own(c);sum[o]+=h;
+  const h=hp[r][c];if(h<=0)continue;
   const bx=c*CW,by=r*CH;
-  const colorIndex=Math.floor(h-1)%BRICK_PALETTE.length;
-  ctx.fillStyle=is1P?BRICK_PALETTE[colorIndex]:COL[o];
+  ctx.fillStyle=BRICK_PALETTE[Math.floor(h-1)%BRICK_PALETTE.length];
   ctx.fillRect(bx+1,by+1,CW-2,CH-2);
-  ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(bx+1,by+1,CW-2,2);ctx.fillRect(bx+1,by+1,2,CH-2);
-  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(bx+1,by+CH-3,CW-2,2);ctx.fillRect(bx+CW-3,by+1,2,CH-2);
-  if(CFG.brickText){const t=String(+h.toFixed(0));ctx.font="9px 'Press Start 2P',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#000';ctx.fillText(t,bx+CW/2+1,by+CH/2+2);ctx.fillStyle='#fff';ctx.fillText(t,bx+CW/2,by+CH/2+1)}
-  const fv=fl[r*COLS+c];if(fv>0){ctx.globalAlpha=fv*.7;ctx.fillStyle='#fff';ctx.fillRect(c*CW+1,r*CH+1,CW-2,CH-2);fl[r*COLS+c]=Math.max(0,fv-.08)}
+  const fv=fl[r*COLS+c];if(fv>0){ctx.globalAlpha=fv*.7;ctx.fillStyle='#fff';ctx.fillRect(bx+1,by+1,CW-2,CH-2);fl[r*COLS+c]=Math.max(0,fv-.08)}
   ctx.globalAlpha=1;
+  ctx.font="9px 'Press Start 2P',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#000';ctx.fillText(h,bx+CW/2+1,by+CH/2+2);ctx.fillStyle='#fff';ctx.fillText(h,bx+CW/2,by+CH/2+1);
  }
-
- for(const b of balls){
+ balls.forEach(b=>{
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.283);
-  if(b.mini){ctx.fillStyle=b.k=='d'||is1P?COL[b.p]:'#6bff95';ctx.fill();continue}
-  drawBall(ctx,b.id,BALLS[b.t].color,COL[b.p],b.x,b.y,b.r,Math.atan2(b.uy,b.ux));
-  if(b.fire>0){
-   ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,6.283);ctx.strokeStyle='#ff4500';ctx.lineWidth=2;ctx.stroke();
-  }
-  if(b.curved>0){
-   ctx.beginPath();ctx.arc(b.x,b.y,b.r+3,0,6.283);ctx.strokeStyle='#e25cff';ctx.lineWidth=1.5;ctx.stroke();
-  }
- }
-
- if(!is1P){
-  document.getElementById('h0').style.width=Math.min(100,sum[0]/(ROWS*SIDE*MAXHP)*100)+'%';
-  document.getElementById('h1').style.width=Math.min(100,sum[1]/(ROWS*SIDE*MAXHP)*100)+'%';
- }else{
-  document.getElementById('h0').style.width='100%';
-  document.getElementById('h1').style.width='0%';
- }
+  ctx.fillStyle=BALLS[b.t].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#2f9bff';ctx.stroke();
+  if(b.fire>0){ctx.beginPath();ctx.arc(b.x,b.y,b.r+3,0,6.283);ctx.strokeStyle='#ff4500';ctx.lineWidth=1.5;ctx.stroke()}
+ });
 }
+
+let scaleSpd=1;
+document.getElementById('spd-ctrl').onclick=e=>{const b=e.target.closest('button');if(b)scaleSpd=+b.dataset.s};
 
 function loop(t){
  const dt=Math.min((t-t0)/1000,.05);t0=t;
- if(over<0){acc+=dt*scale;while(acc>=1/120){step(1/120);acc-=1/120}}
+ acc+=dt*scaleSpd;while(acc>=1/120){step(1/120);acc-=1/120}
  draw();requestAnimationFrame(loop);
 }
 
-document.getElementById('hint').textContent=`1P Idle features procedurally shifting geometries (Hearts, Stars, Spirals) & Idle Breakout power-ups!`;
-init();ui();requestAnimationFrame(t=>{t0=t;loop(t)});
+document.getElementById('hint').textContent=`Drag the panel by its header. Buy & upgrade balls freely in 1P Idle mode!`;
+init();requestAnimationFrame(t=>{t0=t;loop(t)});
 </script></body></html>
