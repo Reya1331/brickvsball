@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Idle Breakout 1P</title>
+<title>Breakout Duel & Idle</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--panel:#0b0b10;--line:#2c2c3a;--ink:#f2f2f2;--mute:#8f8fa0;--p1:#2f9bff;--gold:#ffe14a}
+:root{--bg:#000;--panel:#0b0b10;--line:#2c2c3a;--ink:#f2f2f2;--mute:#8f8fa0;--p1:#2f9bff;--p2:#ff4d3d;--gold:#ffe14a}
 *{box-sizing:border-box}
 body{margin:0;background:#000;color:var(--ink);font:19px/1.1 VT323,'Courier New',monospace;user-select:none;-webkit-user-select:none;overflow:hidden}
-#app{display:flex;justify-content:center;align-items:center;height:100vh;position:relative;gap:12px}
-#mid{flex:0 0 720px;position:relative}
-.pn{position:absolute;width:312px;background:var(--panel);border:3px solid var(--p1);padding:10px 12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin;cursor:grab;z-index:10;left:12px;top:12px}
+#app{display:flex;justify-content:center;align-items:center;height:100vh;position:relative}
+#mid{flex:0 0 760px;position:relative}
+.pn{position:absolute;width:312px;background:var(--panel);border:3px solid;padding:10px 12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin;cursor:grab;z-index:10}
 .pn:active{cursor:grabbing}
-.ph{display:flex;align-items:center;gap:8px;cursor:pointer}
-.ph h2{margin:0;font:12px 'Press Start 2P',monospace;flex:1;color:var(--p1)}
+#p0{border-color:var(--p1);left:12px;top:12px}
+#p1{border-color:var(--p2);right:12px;top:12px;display:none}
+.ph{display:flex;align-items:center;gap:8px}
+.ph h2{margin:0;font:12px 'Press Start 2P',monospace;flex:1}
 .ph b{font:18px 'Press Start 2P',monospace;color:var(--gold)}
 .ph span{color:var(--mute)}
 .sub{color:var(--mute);margin:6px 0}
@@ -47,10 +49,13 @@ button:focus-visible{outline:2px solid var(--gold)}
 canvas{width:100%;display:block;background:#000;border:3px solid #444}
 .bars{display:flex;gap:10px;margin-bottom:8px}
 .bars div{flex:1;height:12px;background:#15151f;border:2px solid #444;display:flex}
+.bars div:last-child{justify-content:flex-end}
 .bars i{display:block;height:100%;background:var(--p1);transition:width .2s}
 .ctl{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--mute);gap:6px;flex-wrap:wrap}
 .ctl button.on{background:#2a3d66;border-color:#8fb4ff}
 .hint{color:var(--mute);font-size:16px;margin:8px 0 0;line-height:1.1}
+#win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:rgba(0,0,0,.85);font:26px 'Press Start 2P',monospace}
+#win button{font-size:20px;padding:6px 18px}
 #ctrl-box{position:fixed;bottom:12px;right:12px;background:var(--panel);border:3px solid #4a4a5e;padding:8px 10px;z-index:99;box-shadow:0 0 10px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:6px;min-width:220px}
 #ctrl-box h3{margin:0 0 4px;font:11px 'Press Start 2P',monospace;color:var(--gold)}
 #ctrl-box .btn-group{display:flex;gap:4px;flex-wrap:wrap}
@@ -61,35 +66,45 @@ canvas{width:100%;display:block;background:#000;border:3px solid #444}
 #trivia-box{margin-top:6px;font-size:15px;color:var(--gold);background:#12121a;border:1px dashed #4a4a5e;padding:4px 6px;min-height:36px}
 </style></head><body>
 <div id="app">
- <div class="pn" id="panel">
-  <div class="ph" id="panel-handle"><h2>Idle Breakout</h2><b id="coin-disp">40</b><span>coins</span></div>
-  <p class="sub" id="sub-disp">0/40 balls</p>
-  <div id="shop-container"></div>
+ <div class="pn" id="p0">
+  <div class="ph" id="h0-drag"><h2 style="color:var(--p1)">Player 1</h2><b id="coin-0">40</b><span>coins</span></div>
+  <p class="sub" id="sub-0">0/40 balls</p>
+  <div id="shop-0"></div>
+ </div>
+ <div class="pn" id="p1">
+  <div class="ph" id="h1-drag"><h2 style="color:var(--p2)">Player 2 Store</h2><b id="coin-1">40</b><span>coins</span></div>
+  <p class="sub" id="sub-1">0/40 balls</p>
+  <div id="shop-1"></div>
  </div>
  <div id="mid">
-  <div class="bars"><div><i id="h-bar" style="width:100%"></i></div></div>
+  <div class="bars"><div><i id="bar-hp" style="width:100%"></i></div></div>
   <canvas id="cv"></canvas>
   <div class="ctl"><span id="hud"></span></div>
   <p class="hint" id="hint"></p>
+  <div id="win"><span id="wt"></span><button id="re">Rematch</button></div>
  </div>
 </div>
 
 <div id="ctrl-box">
  <h3>Control Panel</h3>
+ <div class="btn-group">
+  <button id="btn-1p" class="on">1P Idle</button>
+  <button id="btn-2p">2P Duel</button>
+ </div>
  <div class="btn-group" id="spd-ctrl">
   <button data-s="0">Pause</button>
   <button data-s="1" class="on">1x</button>
   <button data-s="2">2x</button>
   <button data-s="4">4x</button>
  </div>
- <div class="pwr-section">
+ <div class="pwr-section" id="pwr-box">
   <div class="pwr-row">
    <button id="pwr-free">Free Ball (<span id="c-free">50</span>)</button>
    <button id="pwr-fire">Fireball (<span id="c-fire">200</span>)</button>
   </div>
   <div class="pwr-row">
-   <button id="pwr-speed">Speed Boost (<span id="c-speed">500</span>)</button>
-   <button id="pwr-multi">Multi-Ball (<span id="c-multi">1500</span>)</button>
+   <button id="pwr-speed">Speed (<span id="c-speed">500</span>)</button>
+   <button id="pwr-multi">Multi (<span id="c-multi">1500</span>)</button>
   </div>
  </div>
  <div id="trivia-box">Idle Fact: Higher wave tiers yield exponentially more cash!</div>
@@ -102,7 +117,6 @@ const CFG={
  coinsPerHP:5,
  trickle:2,
  ballCap:40,
- miniCap:40,
  buyGrow:1.22,
  upGrow:1.6,
  maxLevel:5,
@@ -115,7 +129,7 @@ const TRIVIA_FACTS=[
  "Trivia: Structured map layouts require precision angled bounces to clear.",
  "Idle Tip: Purchasing Fireball power-ups instantly vaporizes surrounding tile health.",
  "Did you know? Star shaped maps feature central high-health core matrices.",
- "Idle Strategy: Balance upgrading ball damage with multi-ball acquisition for maximum idle income!"
+ "2P Strategy: Coordinate brick placement and ball purchases to outlast your opponent!"
 ];
 
 const f=x=>+x.toFixed(2),pc=x=>Math.round(x*100)+'%';
@@ -144,7 +158,7 @@ const BALLS=[
  ups:[['Extra Shrapnel','Minis spawned',s=>s.mn+' minis',{mn:['+',.5,{int:true}]}],
       ['Long Fuse','Bounces before fade',s=>s.ml+' bounces',{ml:['+',1]}],
       ['Rocket Fuel','Ball speed',s=>f(s.spd)+' spd',{spd:['*',.8]}]]},
- {id:'synerget',name:'Synerget',color:'#e25cff',r:7,cost:4500,upBase:120,
+{id:'synerget',name:'Synerget',color:'#e25cff',r:7,cost:4500,upBase:120,
  desc:'Collides with balls. Merges 2 balls touched within 5s.',
  base:{dmg:.5,spd:1.3},
  ups:[['Flux Core','Damage on bricks',s=>f(s.dmg)+' dmg',{dmg:['+',.3]}],
@@ -152,9 +166,12 @@ const BALLS=[
 ];
 
 const CW=30,CH=24,COLS=24,ROWS=20,W=COLS*CW,H=ROWS*CH;
-let wave1P=1,scale=1,acc=0,t0=0,gt=0;
-let hp=[],fl=new Float32Array(ROWS*COLS),balls=[],mon=CFG.startCoins,earn=0,rate=0;
-let lv=BALLS.map(b=>b.ups.map(()=>0)),cnt=BALLS.map(()=>0),S=[];
+let is1P=true,wave1P=1,scale=1,acc=0,t0=0,gt=0,over=-1;
+let hp=[],fl=new Float32Array(ROWS*COLS),balls=[];
+let mon=[CFG.startCoins,CFG.startCoins],earn=[0,0],rate=[0,0];
+let lv=[BALLS.map(b=>b.ups.map(()=>0)), BALLS.map(b=>b.ups.map(()=>0))];
+let cnt=[BALLS.map(()=>0), BALLS.map(()=>0)];
+let S=[[],[]];
 let pwrCosts={free:50,fire:200,speed:500,multi:1500};
 
 function calcStat(b,l){
@@ -164,9 +181,9 @@ function calcStat(b,l){
   if(o.min!=null)x=Math.max(o.min,x);if(o.max!=null)x=Math.min(o.max,x);if(o.int)x=Math.floor(x+1e-9);s[k]=x}});
  return s;
 }
-function refreshStats(){S=BALLS.map((b,i)=>calcStat(b,lv[i]))}
+function refreshStats(){S=[BALLS.map((b,i)=>calcStat(b,lv[0][i])), BALLS.map((b,i)=>calcStat(b,lv[1][i]))]}
 
-function initField(){
+function initField1P(){
  hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
  const shapeType=(wave1P-1)%5;
  for(let r=0;r<ROWS;r++){
@@ -182,76 +199,95 @@ function initField(){
    }else if(shapeType===2){ // Diamond Citadel
     const dr=ROWS/2,dc=COLS/2;
     if(Math.abs(r-dr)+Math.abs(c-dc)<=8)active=true;
-   }else if(shapeType===3){ // Perimeter & Core pillars
+   }else if(shapeType===3){ // Perimeter & Core
     if(r===1||r===ROWS-2||c===1||c===COLS-2||(r===Math.floor(ROWS/2)&&c%2===0))active=true;
-   }else{ // Spiral Fortress
+   }else{ // Spiral
     const dr=ROWS/2,dc=COLS/2;
     const angle=Math.atan2(r-dr,c-dc),dist=Math.hypot(r-dr,c-dc);
     if(Math.abs(dist-(angle+wave1P)*1.8)%3<1.2&&dist<=8)active=true;
    }
    if(active){
-    // Primary level challenge with structured outline/wall strength offsets
-    let h=Math.max(1, wave1P + ((r===1||r===ROWS-2||c===1||c===COLS-2)?2:0));
-    hp[r][c]=h;
+    hp[r][c]=Math.max(1, wave1P + ((r===1||r===ROWS-2||c===1||c===COLS-2)?2:0));
    }
   }
  }
 }
 
+function initField2P(){
+ hp=[];for(let r=0;r<ROWS;r++){hp[r]=new Float32Array(COLS)}
+ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  if(c<4||c>=COLS-4)hp[r][c]=CFG.brickHP;
+ }
+}
+
 function init(){
- mon=parseInt(document.getElementById('start-coin-input')?.value||CFG.startCoins);
- wave1P=1;gt=0;balls=[];earn=0;rate=0;
- lv=BALLS.map(b=>b.ups.map(()=>0));cnt=BALLS.map(()=>0);
+ const startC=parseInt(document.getElementById('start-coin-input')?.value||CFG.startCoins);
+ mon=[startC,startC];gt=0;balls=[];earn=[0,0];rate=[0,0];over=-1;
+ wave1P=1;
+ lv=[BALLS.map(b=>b.ups.map(()=>0)), BALLS.map(b=>b.ups.map(()=>0))];
+ cnt=[BALLS.map(()=>0), BALLS.map(()=>0)];
  refreshStats();
- initField();
- spawn(0);
- buildShop();
- updatePwrUI();
+ if(is1P){initField1P();spawn(0,0)}else{initField2P();spawn(0,0);spawn(1,0)}
+ buildShops();
+ updateShops();
+ document.getElementById('win').style.display='none';
+ document.getElementById('pwr-box').style.display=is1P?'flex':'none';
+ document.getElementById('p1').style.display=is1P?'none':'block';
 }
 
-function spawn(t=0){
- const y=H/2+(Math.random()-.5)*60,x=W/2+(Math.random()-.5)*60;
+function spawn(p,t=0){
+ const startX=is1P?W/2:(p===0?W*0.25:W*0.75);
+ const y=H/2+(Math.random()-.5)*60,x=startX+(Math.random()-.5)*40;
  const a=Math.random()*6.283;
- balls.push({t,id:BALLS[t].id,x,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,tg:null,tt:0,fire:0});
- cnt[t]++;
+ balls.push({p,t,id:BALLS[t].id,x,y,ux:Math.cos(a),uy:Math.sin(a),r:BALLS[t].r,ch:0,fire:0});
+ cnt[p][t]++;
 }
 
-const buyCost=i=>Math.round(BALLS[i].cost*CFG.buyGrow**(cnt[i]-(i==0?1:0)));
-const upCost=(i,j)=>Math.round((BALLS[i].upBase??Math.max(20,BALLS[i].cost*.9))*(BALLS[i].upGrow??CFG.upGrow)**lv[i][j]);
-const owned=()=>cnt.reduce((a,b)=>a+b,0);
+const buyCost=(p,i)=>Math.round(BALLS[i].cost*CFG.buyGrow**(cnt[p][i]-(i==0?1:0)));
+const upCost=(p,i,j)=>Math.round((BALLS[i].upBase??Math.max(20,BALLS[i].cost*.9))*(BALLS[i].upGrow??CFG.upGrow)**lv[p][i][j]);
+const owned=p=>cnt[p].reduce((a,b)=>a+b,0);
 
-function buy(i){const c=buyCost(i);if(mon<c||owned()>=CFG.ballCap)return;mon-=c;spawn(i);updateShop()}
-function up(i,j){if(lv[i][j]>=CFG.maxLevel)return;const c=upCost(i,j);if(mon<c)return;mon-=c;lv[i][j]++;refreshStats();updateShop()}
+function buy(p,i){const c=buyCost(p,i);if(mon[p]<c||owned(p)>=CFG.ballCap)return;mon[p]-=c;spawn(p,i);updateShops()}
+function up(p,i,j){if(lv[p][i][j]>=CFG.maxLevel)return;const c=upCost(p,i,j);if(mon[p]<c)return;mon[p]-=c;lv[p][i][j]++;refreshStats();updateShops()}
 
 function dmg(r,c,a,ballRef){
  if(r<0||r>=ROWS||c<0||c>=COLS||hp[r][c]<=0||a<=0)return;
  let x=Math.min(hp[r][c],a);
  if(ballRef&&ballRef.fire)x*=2.5;
  hp[r][c]-=x;fl[r*COLS+c]=1;
- mon+=x*CFG.coinsPerHP*wave1P;earn+=x*CFG.coinsPerHP*wave1P;
+ const p=is1P?0:ballRef.p;
+ mon[p]+=x*CFG.coinsPerHP*(is1P?wave1P:1);earn[p]+=x*CFG.coinsPerHP*(is1P?wave1P:1);
+
  if(hp[r][c]<=0.001){
   hp[r][c]=0;
-  // Check if any bricks remain
-  let remaining=0;
-  for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<COLS;cc++)if(hp[rr][cc]>0)remaining++;
-  if(remaining===0){wave1P++;initFieldStage()}
+  if(is1P){
+   let remaining=0;
+   for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<COLS;cc++)if(hp[rr][cc]>0)remaining++;
+   if(remaining===0){wave1P++;initField1P()}
+  }else{
+   // Check win condition in 2P
+   let p0Bricks=0,p1Bricks=0;
+   for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<COLS;cc++){
+    if(hp[rr][cc]>0){if(cc<COLS/2)p0Bricks++;else p1Bricks++;}
+   }
+   if(p0Bricks===0&&over<0){over=1;showWin()}
+   else if(p1Bricks===0&&over<0){over=0;showWin()}
+  }
  }
 }
 
-function initFieldStage(){initField()}
-
 function step(dt){
- gt+=dt;mon+=CFG.trickle*dt;earn+=CFG.trickle*dt;
+ gt+=dt;
+ for(let p=0;p<(is1P?1:2);p++){mon[p]+=CFG.trickle*dt;earn[p]+=CFG.trickle*dt;}
 
  for(let i=balls.length-1;i>=0;i--){
-  const b=balls[i],s=S[b.t];
-  if(b.id=='sniper')b.ch+=dt;
+  const b=balls[i],s=S[b.p][b.t];
   const sp=s.spd*CFG.unit;
   b.x+=b.ux*sp*dt;b.y+=b.uy*sp*dt;
   let wh=false;
   if(b.x<b.r){b.x=b.r;b.ux=Math.abs(b.ux);wh=true}else if(b.x>W-b.r){b.x=W-b.r;b.ux=-Math.abs(b.ux);wh=true}
   if(b.y<b.r){b.y=b.r;b.uy=Math.abs(b.uy);wh=true}else if(b.y>H-b.r){b.y=H-b.r;b.uy=-Math.abs(b.uy);wh=true}
-  if(wh){if(b.id=='scatter'){/* mini spawn */}const a=Math.atan2(b.uy,b.ux)+(Math.random()-.5)*.2;b.ux=Math.cos(a);b.uy=Math.sin(a)}
+  if(wh){const a=Math.atan2(b.uy,b.ux)+(Math.random()-.5)*.2;b.ux=Math.cos(a);b.uy=Math.sin(a)}
 
   const c0=Math.max(0,Math.floor((b.x-b.r)/CW)),c1=Math.min(COLS-1,Math.floor((b.x+b.r)/CW));
   const r0=Math.max(0,Math.floor((b.y-b.r)/CH)),r1=Math.min(ROWS-1,Math.floor((b.y+b.r)/CH));
@@ -267,59 +303,76 @@ function step(dt){
  }
 }
 
-// Build UI
-const shopEl=document.getElementById('shop-container');
-function buildShop(){
- shopEl.innerHTML=BALLS.map((t,i)=>`
- <div class="card open">
-  <div class="hd">
-   <button class="tg" onclick="toggleCard(${i})">${t.name} <span class="cn" id="cn-${i}">×${cnt[i]}</span></button>
-   <button class="buy" id="buy-${i}" onclick="buy(${i})">Buy</button>
-  </div>
-  <div class="bd" id="bd-${i}">
-   <p class="ds">${t.desc}</p>
-   <p class="st" id="st-${i}">Now: ${BALLS[i].id}</p>
-   ${t.ups.map((u,j)=>`
-    <div class="u">
-     <div class="ut">${u[0]}<span class="seg" id="seg-${i}-${j}">${'<i></i>'.repeat(CFG.maxLevel)}</span></div>
-     <div class="ud">${u[1]}</div>
-     <div class="uv"><span id="cu-${i}-${j}"></span><em>→</em><span id="nx-${i}-${j}"></span></div>
-     <button class="ub" onclick="up(${i},${j})"><b id="uc-${i}-${j}">0</b><small>Up</small></button>
-    </div>`).join('')}
-  </div>
- </div>`).join('');
+function buildShops(){
+ [0,1].forEach(p=>{
+  const el=document.getElementById(`shop-${p}`);
+  el.innerHTML=BALLS.map((t,i)=>`
+  <div class="card open">
+   <div class="hd">
+    <button class="tg" onclick="toggleCard(${p},${i})">${t.name} <span class="cn" id="cn-${p}-${i}">×${cnt[p][i]}</span></button>
+    <button class="buy" id="buy-${p}-${i}" onclick="buy(${p},${i})">Buy</button>
+   </div>
+   <div class="bd" id="bd-${p}-${i}">
+    <p class="ds">${t.desc}</p>
+    <p class="st" id="st-${p}-${i}">Now: ${f(S[p][i].dmg)} dmg</p>
+    ${t.ups.map((u,j)=>`
+     <div class="u">
+      <div class="ut">${u[0]}<span class="seg" id="seg-${p}-${i}-${j}">${'<i></i>'.repeat(CFG.maxLevel)}</span></div>
+      <div class="ud">${u[1]}</div>
+      <div class="uv"><span id="cu-${p}-${i}-${j}"></span><em>→</em><span id="nx-${p}-${i}-${j}"></span></div>
+      <button class="ub" onclick="up(${p},${i},${j})"><b id="uc-${p}-${i}-${j}">0</b><small>Up</small></button>
+     </div>`).join('')}
+   </div>
+  </div>`).join('');
+ });
 }
-window.toggleCard=i=>{document.getElementById(`bd-${i}`).parentElement.classList.toggle('open')};
+window.toggleCard=(p,i)=>document.getElementById(`bd-${p}-${i}`).parentElement.classList.toggle('open');
 
-function updateShop(){
- document.getElementById('coin-disp').textContent=Math.floor(mon);
- document.getElementById('sub-disp').textContent=`+${rate.toFixed(1)}/s · ${owned()}/${CFG.ballCap} balls`;
- BALLS.forEach((t,i)=>{
-  const c=buyCost(i);
-  const buyBtn=document.getElementById(`buy-${i}`);
-  if(buyBtn){buyBtn.textContent='Buy '+c;buyBtn.classList.toggle('off',mon<c||owned()>=CFG.ballCap)}
-  document.getElementById(`cn-${i}`).textContent=`×${cnt[i]}`;
-  document.getElementById(`st-${i}`).textContent=`Now: `+(i===0?`${f(S[i].dmg)} dmg`: t.desc);
-  t.ups.forEach((u,j)=>{
-   const l=lv[i][j],mx=l>=CFG.maxLevel,c2=upCost(i,j);
-   const segs=document.querySelectorAll(`#seg-${i}-${j} i`);
-   segs.forEach((g,k)=>g.classList.toggle('on',k<l));
-   const at=k=>{const a=lv[i].slice();a[j]=k;return u[2](calcStat(t,a))};
-   document.getElementById(`cu-${i}-${j}`).textContent=at(l);
-   document.getElementById(`nx-${i}-${j}`).textContent=mx?'max':at(l+1);
-   document.getElementById(`uc-${i}-${j}`).textContent=mx?'MAX':c2;
+function updateShops(){
+ [0,1].forEach(p=>{
+  document.getElementById(`coin-${p}`).textContent=Math.floor(mon[p]);
+  document.getElementById(`sub-${p}`).textContent=`+${rate[p].toFixed(1)}/s · ${owned(p)}/${CFG.ballCap} balls`;
+  BALLS.forEach((t,i)=>{
+   const c=buyCost(p,i),buyBtn=document.getElementById(`buy-${p}-${i}`);
+   if(buyBtn){buyBtn.textContent='Buy '+c;buyBtn.classList.toggle('off',mon[p]<c||owned(p)>=CFG.ballCap)}
+   document.getElementById(`cn-${p}-${i}`).textContent=`×${cnt[p][i]}`;
+   document.getElementById(`st-${p}-${i}`).textContent=`Now: ${f(S[p][i].dmg)} dmg`;
+   t.ups.forEach((u,j)=>{
+    const l=lv[p][i][j],mx=l>=CFG.maxLevel,c2=upCost(p,i,j);
+    const segs=document.querySelectorAll(`#seg-${p}-${i}-${j} i`);
+    segs.forEach((g,k)=>g.classList.toggle('on',k<l));
+    const at=k=>{const a=lv[p][i].slice();a[j]=k;return u[2](calcStat(t,a))};
+    document.getElementById(`cu-${p}-${i}-${j}`).textContent=at(l);
+    document.getElementById(`nx-${p}-${i}-${j}`).textContent=mx?'max':at(l+1);
+    document.getElementById(`uc-${p}-${i}-${j}`).textContent=mx?'MAX':c2;
+   });
   });
  });
 }
 
-let pe=0;
-setInterval(()=>{const r=(earn-pe)/.1;pe=earn;rate=rate*.95+r*.05;updateShop();document.getElementById('hud').textContent=`Wave ${wave1P} · Cash: +${rate.toFixed(1)}/s`},100);
+function showWin(){
+ const w=document.getElementById('win'),t=document.getElementById('wt');
+ t.textContent=`Player ${over+1} Wins!`;
+ t.style.color=over===0?'var(--p1)':'var(--p2)';
+ w.style.display='flex';
+}
+document.getElementById('re').onclick=()=>init();
+
+let pe=[0,0];
+setInterval(()=>{
+ [0,1].forEach(p=>{const r=(earn[p]-pe[p])/.1;pe[p]=earn[p];rate[p]=rate[p]*.95+r*.05});
+ updateShops();
+ document.getElementById('hud').textContent=is1P?`Wave ${wave1P} · Cash: +${rate[0].toFixed(1)}/s`:`2P Duel Active`;
+},100);
 setInterval(()=>{document.getElementById('trivia-box').textContent=TRIVIA_FACTS[Math.floor(Math.random()*TRIVIA_FACTS.length)]},8000);
 
-document.getElementById('pwr-free').onclick=()=>{if(mon>=pwrCosts.free&&balls.length<CFG.ballCap){mon-=pwrCosts.free;spawn(0);pwrCosts.free=Math.round(pwrCosts.free*1.5);updatePwrUI()}};
-document.getElementById('pwr-fire').onclick=()=>{if(mon>=pwrCosts.fire&&balls.length>0){mon-=pwrCosts.fire;balls.forEach(b=>b.fire=10);pwrCosts.fire=Math.round(pwrCosts.fire*1.8);updatePwrUI()}};
-document.getElementById('pwr-speed').onclick=()=>{if(mon>=pwrCosts.speed&&balls.length>0){mon-=pwrCosts.speed;balls.forEach(b=>{b.ux*=1.3;b.uy*=1.3});pwrCosts.speed=Math.round(pwrCosts.speed*2.0);updatePwrUI()}};
-document.getElementById('pwr-multi').onclick=()=>{if(mon>=pwrCosts.multi&&balls.length<CFG.ballCap){mon-=pwrCosts.multi;const t=Math.floor(Math.random()*BALLS.length);spawn(t);spawn(t);pwrCosts.multi=Math.round(pwrCosts.multi*2.2);updatePwrUI()}};
+document.getElementById('btn-1p').onclick=()=>{is1P=true;document.getElementById('btn-1p').classList.add('on');document.getElementById('btn-2p').classList.remove('on');init()};
+document.getElementById('btn-2p').onclick=()=>{is1P=false;document.getElementById('btn-2p').classList.add('on');document.getElementById('btn-1p').classList.remove('on');init()};
+
+document.getElementById('pwr-free').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.free&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.free;spawn(0,0);pwrCosts.free=Math.round(pwrCosts.free*1.5);updatePwrUI()}};
+document.getElementById('pwr-fire').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.fire&&balls.length>0){mon[0]-=pwrCosts.fire;balls.forEach(b=>b.fire=10);pwrCosts.fire=Math.round(pwrCosts.fire*1.8);updatePwrUI()}};
+document.getElementById('pwr-speed').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.speed&&balls.length>0){mon[0]-=pwrCosts.speed;balls.forEach(b=>{b.ux*=1.3;b.uy*=1.3});pwrCosts.speed=Math.round(pwrCosts.speed*2.0);updatePwrUI()}};
+document.getElementById('pwr-multi').onclick=()=>{if(is1P&&mon[0]>=pwrCosts.multi&&balls.length<CFG.ballCap){mon[0]-=pwrCosts.multi;const t=Math.floor(Math.random()*BALLS.length);spawn(0,t);spawn(0,t);pwrCosts.multi=Math.round(pwrCosts.multi*2.2);updatePwrUI()}};
 
 function updatePwrUI(){
  document.getElementById('c-free').textContent=pwrCosts.free;
@@ -328,23 +381,29 @@ function updatePwrUI(){
  document.getElementById('c-multi').textContent=pwrCosts.multi;
 }
 
-// Draggable panel logic
-const panel=document.getElementById('panel'),handle=document.getElementById('panel-handle');
-let isDrag=false,startX=0,startY=0;
-handle.onpointerdown=e=>{isDrag=true;startX=e.clientX-panel.offsetLeft;startY=e.clientY-panel.offsetTop;handle.setPointerCapture(e.pointerId)};
-handle.onpointermove=e=>{if(!isDrag)return;panel.style.left=(e.clientX-startX)+'px';panel.style.top=(e.clientY-startY)+'px'};
-handle.onpointerup=e=>{isDrag=false};
+// Draggable panels
+[0,1].forEach(p=>{
+ const panel=document.getElementById(`p${p}`),handle=document.getElementById(`h${p}-drag`);
+ let isDrag=false,startX=0,startY=0;
+ handle.onpointerdown=e=>{isDrag=true;startX=e.clientX-panel.offsetLeft;startY=e.clientY-panel.offsetTop;handle.setPointerCapture(e.pointerId)};
+ handle.onpointermove=e=>{if(!isDrag)return;panel.style.left=(e.clientX-startX)+'px';panel.style.top=(e.clientY-startY)+'px'};
+ handle.onpointerup=e=>{isDrag=false};
+});
 
-// Canvas render
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
 cv.width=W*dpr;cv.height=H*dpr;
 
 function draw(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ if(!is1P){
+  ctx.fillStyle='rgba(47,155,255,.05)';ctx.fillRect(0,0,W/2,H);
+  ctx.fillStyle='rgba(255,77,61,.05)';ctx.fillRect(W/2,0,W/2,H);
+  ctx.strokeStyle='#26324a';ctx.setLineDash([6,8]);ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+ }
  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
   const h=hp[r][c];if(h<=0)continue;
   const bx=c*CW,by=r*CH;
-  ctx.fillStyle=BRICK_PALETTE[Math.floor(h-1)%BRICK_PALETTE.length];
+  ctx.fillStyle=is1P?BRICK_PALETTE[Math.floor(h-1)%BRICK_PALETTE.length]:(c<COLS/2?'var(--p1)':'var(--p2)');
   ctx.fillRect(bx+1,by+1,CW-2,CH-2);
   const fv=fl[r*COLS+c];if(fv>0){ctx.globalAlpha=fv*.7;ctx.fillStyle='#fff';ctx.fillRect(bx+1,by+1,CW-2,CH-2);fl[r*COLS+c]=Math.max(0,fv-.08)}
   ctx.globalAlpha=1;
@@ -352,7 +411,7 @@ function draw(){
  }
  balls.forEach(b=>{
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.283);
-  ctx.fillStyle=BALLS[b.t].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#2f9bff';ctx.stroke();
+  ctx.fillStyle=BALLS[b.t].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=is1P?'var(--p1)':(b.p===0?'var(--p1)':'var(--p2)');ctx.stroke();
   if(b.fire>0){ctx.beginPath();ctx.arc(b.x,b.y,b.r+3,0,6.283);ctx.strokeStyle='#ff4500';ctx.lineWidth=1.5;ctx.stroke()}
  });
 }
@@ -362,10 +421,10 @@ document.getElementById('spd-ctrl').onclick=e=>{const b=e.target.closest('button
 
 function loop(t){
  const dt=Math.min((t-t0)/1000,.05);t0=t;
- acc+=dt*scaleSpd;while(acc>=1/120){step(1/120);acc-=1/120}
+ if(over<0){acc+=dt*scaleSpd;while(acc>=1/120){step(1/120);acc-=1/120}}
  draw();requestAnimationFrame(loop);
 }
 
-document.getElementById('hint').textContent=`Drag the panel by its header. Buy & upgrade balls freely in 1P Idle mode!`;
+document.getElementById('hint').textContent=`Switch modes in Control Panel. Drag panels freely by their headers!`;
 init();requestAnimationFrame(t=>{t0=t;loop(t)});
 </script></body></html>
